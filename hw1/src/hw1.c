@@ -27,5 +27,13 @@
  * @return Refer to homework document for the return value of this function.
  */
 unsigned short validargs(int argc, char **argv) {
-    return 0x8000;
+    printf("%d\n", **argv);
+    argv++;
+    *argv += 1;
+    if (**argv == 104)
+    {
+        return 1;
+    }
+    else
+        return 0;
 }
