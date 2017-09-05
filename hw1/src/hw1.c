@@ -30,8 +30,11 @@ unsigned short validargs(int argc, char **argv) {
     printf("%d\n", **argv);
     argv++;
     *argv += 1;
-    if (**argv == 104)
-    {
+    //if -d, -e, -k, -r, or -c flag is first flag return error
+    if (**argv == 100 || **argv == 101 || **argv == 107 || **argv == 114 || **argv == 99){
+        return 0;
+    }
+    if (**argv == 104){ //if -h flag first return mode 1 for help menu
         return 1;
     }
     else
