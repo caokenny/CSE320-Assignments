@@ -23,7 +23,11 @@ int main(int argc, char **argv)
 
     debug("Mode: 0x%X", mode);
 
-    if(mode) {
+    if (mode == 0) {
+        USAGE(*argv, EXIT_FAILURE);
+    }
+
+    if(mode & 0x8000) {
         USAGE(*argv, EXIT_SUCCESS);
     }
 
