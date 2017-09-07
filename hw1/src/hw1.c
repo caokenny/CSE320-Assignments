@@ -27,8 +27,9 @@
  * @return Refer to homework document for the return value of this function.
  */
 unsigned short validargs(int argc, char **argv) {
-    short x;
+    short x = 0;
     short returnValue;
+    int argcHolder = argc - 4;
     argv++;
     *argv += 1;
     //if -d, -e, -k, -r, or -c flag is first flag return error
@@ -52,30 +53,29 @@ unsigned short validargs(int argc, char **argv) {
         *argv += 1; //get the letter instead of -
         if (**argv == 101){ //-e flag
             returnValue = 0x0000;
-            argv++; //get argv[3]
-            *argv += 1;
-            while(1) {
+            for (int i = 0; i < argcHolder; i++) {
+                argv++; //get argv[3]
+                *argv += 1;
                 if (**argv == 99) { //if -c flag
                     argv++; //get argv[4]
                     sscanf(*argv, "%hu", &x); //parses string to short
                     returnValue = returnValue | x; //bitwise or to change 0-4 LSB to the int given
-                    argv++;
-                    *argv += 1;
                 }
-                else if (**argv == 114) { //if -r flag
+                if (**argv == 114) { //if -r flag
                     argv++;
                     sscanf(*argv, "%hu", &x);
                     short rows;
                     rows = x << 4;
                     returnValue = returnValue | rows;
-                    argv++;
-                    *argv += 1;
                 }
-                else break;
             }
-            if (returnValue == 0x0000)
+            if (returnValue == 0x0000){
                 return 0x00AA;
-            else return returnValue;
+            }
+            else{
+                printf("%d\n", returnValue);
+                return returnValue;
+            }
         }
         else if (**argv == 100) { //if -d flag
             returnValue = 0x2000;
@@ -105,4 +105,5 @@ unsigned short validargs(int argc, char **argv) {
             else return returnValue;
         }
     }
+    return 0x8000;
 }

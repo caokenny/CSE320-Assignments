@@ -23,12 +23,16 @@ int main(int argc, char **argv)
 
     debug("Mode: 0x%X", mode);
 
-    if (mode == 0) {
+    if (mode == 0x0000) {
         USAGE(*argv, EXIT_FAILURE);
     }
 
     if(mode & 0x8000) {
         USAGE(*argv, EXIT_SUCCESS);
+    }
+
+    if (mode == 0x00AA){
+        printf("IT WORKED\n");
     }
 
     return EXIT_SUCCESS;
