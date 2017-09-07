@@ -54,15 +54,55 @@ unsigned short validargs(int argc, char **argv) {
             returnValue = 0x0000;
             argv++; //get argv[3]
             *argv += 1;
-            switch(**argv){
-                case 99: //columns
+            while(1) {
+                if (**argv == 99) { //if -c flag
                     argv++; //get argv[4]
+                    sscanf(*argv, "%hu", &x); //parses string to short
+                    returnValue = returnValue | x; //bitwise or to change 0-4 LSB to the int given
+                    argv++;
+                    *argv += 1;
+                }
+                else if (**argv == 114) { //if -r flag
+                    argv++;
                     sscanf(*argv, "%hu", &x);
-                    returnValue = returnValue | x;
-                    break;
+                    short rows;
+                    rows = x << 4;
+                    returnValue = returnValue | rows;
+                    argv++;
+                    *argv += 1;
+                }
+                else break;
             }
+            if (returnValue == 0x0000)
+                return 0x00AA;
+            else return returnValue;
+        }
+        else if (**argv == 100) { //if -d flag
+            returnValue = 0x2000;
+            argv++; //get argv[3]
+            *argv += 1;
+            while(1) {
+                if (**argv == 99) { //if -c flag
+                    argv++; //get argv[4]
+                    sscanf(*argv, "%hu", &x); //parses string to short
+                    returnValue = returnValue | x; //bitwise or to change 0-4 LSB to the int given
+                    argv++;
+                    *argv += 1;
+                }
+                else if (**argv == 114) { //if -r flag
+                    argv++;
+                    sscanf(*argv, "%hu", &x);
+                    short rows;
+                    rows = x << 4;
+                    returnValue = returnValue | rows;
+                    argv++;
+                    *argv += 1;
+                }
+                else break;
+            }
+            if (returnValue == 0x2000)
+                return 0x20AA;
+            else return returnValue;
         }
     }
-    else
-        return 0x0000;
 }
