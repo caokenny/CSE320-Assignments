@@ -29,7 +29,6 @@
 unsigned short validargs(int argc, char **argv) {
     short x = 0;
     short returnValue;
-    int argcHolder = argc - 4;
     argv++;
     *argv += 1;
     //if -d, -e, -k, -r, or -c flag is first flag return error
@@ -53,15 +52,17 @@ unsigned short validargs(int argc, char **argv) {
         *argv += 1; //get the letter instead of -
         if (**argv == 101){ //-e flag
             returnValue = 0x0000;
-            for (int i = 0; i < argcHolder; i++) {
+            for (int i = 0; i < argc - 3; i++) {;
                 argv++; //get argv[3]
                 *argv += 1;
                 if (**argv == 99) { //if -c flag
+                    argc -= 1;
                     argv++; //get argv[4]
                     sscanf(*argv, "%hu", &x); //parses string to short
                     returnValue = returnValue | x; //bitwise or to change 0-4 LSB to the int given
                 }
                 if (**argv == 114) { //if -r flag
+                    argc -= 1;
                     argv++;
                     sscanf(*argv, "%hu", &x);
                     short rows;
