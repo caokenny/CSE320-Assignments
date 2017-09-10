@@ -39,15 +39,72 @@ unsigned short validargs(int argc, char **argv) {
         return 0x8000;
     }
     if (**argv == 102) { //if -f flag
+        if (argc - 2 == 0) return 0x0000; //return error too few arguments
         argv++; //get argv[2]
         *argv += 1; //get the letter instead of -
-        if (**argv == 101)
-            return 0x4000; //When -f -e return second MSB as 1 and third MSB as 0
-        if (**argv == 100)
-            return 0x6000; //When -f -d return second MSB as 1 and third MSB as 1
+        if (**argv == 101) { //if -e flag
+            if (argc - 3 == 0)
+                return 0x4000; //When -f -e return second MSB as 1 and third MSB as 0
+            argv++;
+            *argv += 1;
+            if (**argv == 107) { //if -k flag
+                printf("hi\n");
+                argv++; //get next element
+                argc -= 1;
+                key = *argv;
+                char *keyCompare = *argv; //variable that holds the key so we can compare
+                int keyCounter = 0; //counter
+                int keyBacktrack = 0;
+                while (*key != 0) { //while *key isn't NULL
+                    keyCompare++; //increment keyCompare by 1 so we get the next value so we don't compare the same letters
+                    while (*keyCompare != 0){ //while keyCompare isn't NULL
+                        if (*key == *keyCompare) return 0x0000; //here we compare one letter in the key to the rest of the string
+                        keyCounter++; //increment counter so we know how much to backtrack later
+                        keyCompare++; //increment to the next letter in the key
+                    }
+                    keyCompare -= keyCounter; //backtrack keyCompare
+                    keyCounter = 0; //set counter back to 0
+                    key++; //get the next letter in the key to compare
+                    keyBacktrack++;
+                }
+                key -= keyBacktrack;
+                return 0x4000;
+            }
+            else return 0x0000;
+        }
+        if (**argv == 100) { //if -d flag
+            if (argc - 3 == 0)
+                return 0x6000; //When -f -d return second MSB as 1 and third MSB as 1
+            argv++;
+            *argv += 1;
+            if (**argv == 107) { //if -k flag
+                argv++; //get next element
+                argc -= 1;
+                key = *argv;
+                char *keyCompare = *argv; //variable that holds the key so we can compare
+                int keyCounter = 0; //counter
+                int keyBacktrack = 0;
+                while (*key != 0) { //while *key isn't NULL
+                    keyCompare++; //increment keyCompare by 1 so we get the next value so we don't compare the same letters
+                    while (*keyCompare != 0){ //while keyCompare isn't NULL
+                        if (*key == *keyCompare) return 0x0000; //here we compare one letter in the key to the rest of the string
+                        keyCounter++; //increment counter so we know how much to backtrack later
+                        keyCompare++; //increment to the next letter in the key
+                    }
+                    keyCompare -= keyCounter; //backtrack keyCompare
+                    keyCounter = 0; //set counter back to 0
+                    key++; //get the next letter in the key to compare
+                    keyBacktrack++;
+                }
+                key -= keyBacktrack;
+                return 0x6000;
+            }
+            else return 0x0000;
+        }
         else return 0x0000;
     }
     if (**argv == 112) { //if -p flag
+        if (argc - 2 == 0) return 0x0000; //return error too few argument
         argv++; //get argv[2]
         *argv += 1; //get the letter instead of -
         if (**argv == 107) //if -k flag comes before -e or -d return an error
@@ -81,6 +138,7 @@ unsigned short validargs(int argc, char **argv) {
                     key = *argv;
                     char *keyCompare = *argv; //variable that holds the key so we can compare
                     int keyCounter = 0; //counter
+                    int keyBacktrack = 0;
                     while (*key != 0) { //while *key isn't NULL
                         keyCompare++; //increment keyCompare by 1 so we get the next value so we don't compare the same letters
                         while (*keyCompare != 0){ //while keyCompare isn't NULL
@@ -91,7 +149,9 @@ unsigned short validargs(int argc, char **argv) {
                         keyCompare -= keyCounter; //backtrack keyCompare
                         keyCounter = 0; //set counter back to 0
                         key++; //get the next letter in the key to compare
+                        keyBacktrack++;
                     }
+                    key -= keyBacktrack;
                 }
                 else return 0x0000;
             }
