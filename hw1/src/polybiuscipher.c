@@ -18,17 +18,21 @@ void ePolyCipher(unsigned short mode) {
     int rows = 0x00F0 & mode; //bitmask to bits for rows
     rows = rows >> 4; //shift 4 bits right to get number of rows
     printf("ROWS = %d, COLUMNS = %d\n", rows, columns);
-    loadPolyTable();
+    loadPolyTable(rows, columns);
 }
 
-void loadPolyTable() {
-    int i = 0;
-    polybius_alphabet--;
-    printf("%d\n", *polybius_alphabet);
-    while (*polybius_alphabet != 0){
-        *(polybius_table + i) = *polybius_alphabet;
+void loadPolyTable(int rows, int columns) {
+    int i = 0; //counter
+    while (*polybius_alphabet != 0){ //stop when we hit null term
+        *(polybius_table + i) = *polybius_alphabet; //using pointer arith. fill in the table
         polybius_alphabet++;
         i++;
     }
-    printf("%s\n", polybius_table);
+    int extraSpace = rows * columns; //this is how much space we have left to fill in with null terms
+    extraSpace = extraSpace - 94;
+    while (extraSpace != 0){
+        *(polybius_table + i) = 0;
+        i++;
+        extraSpace--;
+    }
 }

@@ -207,7 +207,6 @@ int checkKeyValidP (int argc, char **argv){
             keyCompare++; //increment to the next letter in the key
         }
         while (*polybius_alphabet != 0){
-            printf("Comparing %d == %d\n", *key, *polybius_alphabet);
             if (*key == *polybius_alphabet) {
                 k = 1;
                 break;
