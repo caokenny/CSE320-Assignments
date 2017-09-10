@@ -78,6 +78,20 @@ unsigned short validargs(int argc, char **argv) {
                 else if (**argv == 107) { //if -k flag
                     argv++; //get next element
                     argc -= 1;
+                    key = *argv;
+                    char *keyCompare = *argv; //variable that holds the key so we can compare
+                    int keyCounter = 0; //counter
+                    while (*key != 0) { //while *key isn't NULL
+                        keyCompare++; //increment keyCompare by 1 so we get the next value so we don't compare the same letters
+                        while (*keyCompare != 0){ //while keyCompare isn't NULL
+                            if (*key == *keyCompare) return 0x0000; //here we compare one letter in the key to the rest of the string
+                            keyCounter++; //increment counter so we know how much to backtrack later
+                            keyCompare++; //increment to the next letter in the key
+                        }
+                        keyCompare -= keyCounter; //backtrack keyCompare
+                        keyCounter = 0; //set counter back to 0
+                        key++; //get the next letter in the key to compare
+                    }
                 }
                 else return 0x0000;
             }

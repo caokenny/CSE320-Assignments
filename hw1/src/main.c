@@ -31,10 +31,6 @@ int main(int argc, char **argv)
         USAGE(*argv, EXIT_SUCCESS);
     }
 
-    if (mode == 0x00AA){
-        printf("IT WORKED\n");
-    }
-
     return EXIT_SUCCESS;
 }
 
