@@ -24,7 +24,6 @@ void ePolyCipher(unsigned short mode) {
         loadPolyTableWithKey(rows, columns);
     }
     else loadPolyTable(rows, columns);
-    printf("%s\n", polybius_table);
 }
 
 void loadPolyTable(int rows, int columns) {
@@ -41,6 +40,7 @@ void loadPolyTable(int rows, int columns) {
         i++;
         extraSpace--;
     }
+    polybius_alphabet -= 94;
 }
 
 void loadPolyTableWithKey(int rows, int columns) {
