@@ -26,6 +26,9 @@
  * @param argv The argument strings passed to the program from the CLI.
  * @return Refer to homework document for the return value of this function.
  */
+
+int keyWasGiven = 0;
+
 unsigned short validargs(int argc, char **argv) {
     short x = 0;
     short returnValue;
@@ -48,6 +51,7 @@ unsigned short validargs(int argc, char **argv) {
             argv++;
             *argv += 1;
             if (**argv == 107) { //if -k flag
+                keyWasGiven = 1;
                 if (argc - 5 != 0) return 0x0000;
                 int kValid = checkKeyValidF(argc, argv);
                 if (kValid == 1) return 0x4000;
@@ -60,6 +64,7 @@ unsigned short validargs(int argc, char **argv) {
             argv++;
             *argv += 1;
             if (**argv == 107) { //if -k flag
+                keyWasGiven = 1;
                 if (argc - 5 != 0) return 0x0000;
                 int kValid = checkKeyValidF(argc, argv);
                 if (kValid == 1) return 0x6000;
@@ -100,6 +105,7 @@ unsigned short validargs(int argc, char **argv) {
                     returnValue = returnValue | rows; //bitwise or to change 5-9 bits to the int given
                 }
                 else if (**argv == 107) { //if -k flag
+                    keyWasGiven = 1;
                     argc -= 1;
                     int kValid = checkKeyValidP(argc, argv);
                     if (kValid == 0) return 0x0000;
@@ -138,6 +144,7 @@ unsigned short validargs(int argc, char **argv) {
                     returnValue = returnValue | rows;
                 }
                 else if (**argv == 107) { //if -k flag
+                    keyWasGiven = 1;
                     argc -= 1;
                     int kValid = checkKeyValidP(argc, argv);
                     if (kValid == 0) return 0x0000;
