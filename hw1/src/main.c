@@ -31,7 +31,7 @@ int main(int argc, char **argv)
         USAGE(*argv, EXIT_SUCCESS);
     }
 
-    //ePolyCipher(mode);
+    ePolyCipher(mode);
 
     return EXIT_SUCCESS;
 }

@@ -160,6 +160,7 @@ int checkKeyValidF(int argc, char **argv) {
     int keyCounter = 0; //counter
     int keyBacktrack = 0;
     int k = 0;
+    int alphabetCounter = 0;
     while (*key != 0) { //while *key isn't NULL
         keyCompare++; //increment keyCompare by 1 so we get the next value so we don't compare the same letters
         while (*keyCompare != 0){ //while keyCompare isn't NULL
@@ -172,9 +173,15 @@ int checkKeyValidF(int argc, char **argv) {
                 k = 1;
                 break;
             }
-            else fm_alphabet++;
+            else {
+                fm_alphabet++;
+                alphabetCounter++;
+            }
         }
         if (k != 1) return 0;
+        k = 0;
+        fm_alphabet -= alphabetCounter;
+        alphabetCounter = 0;
         keyCompare -= keyCounter; //backtrack keyCompare
         keyCounter = 0; //set counter back to 0
         key++; //get the next letter in the key to compare
@@ -191,6 +198,7 @@ int checkKeyValidP (int argc, char **argv){
     int keyCounter = 0; //counter
     int keyBacktrack = 0;
     int k = 0;
+    int alphabetCounter = 0;
     while (*key != 0) { //while *key isn't NULL
         keyCompare++; //increment keyCompare by 1 so we get the next value so we don't compare the same letters
         while (*keyCompare != 0){ //while keyCompare isn't NULL
@@ -199,13 +207,20 @@ int checkKeyValidP (int argc, char **argv){
             keyCompare++; //increment to the next letter in the key
         }
         while (*polybius_alphabet != 0){
+            printf("Comparing %d == %d\n", *key, *polybius_alphabet);
             if (*key == *polybius_alphabet) {
                 k = 1;
                 break;
             }
-            else polybius_alphabet++;
+            else {
+                polybius_alphabet++;
+                alphabetCounter++;
+            }
         }
         if (k != 1) return 0;
+        k = 0;
+        polybius_alphabet -= alphabetCounter;
+        alphabetCounter = 0;
         keyCompare -= keyCounter; //backtrack keyCompare
         keyCounter = 0; //set counter back to 0
         key++; //get the next letter in the key to compare
@@ -213,21 +228,4 @@ int checkKeyValidP (int argc, char **argv){
     }
     key -= keyBacktrack;
     return 1;
-}
-
-
-void ePolyCipher(unsigned short mode) {
-    int columns = 0x000F & mode; //bitmask to get number of columns
-    int rows = 0x00F0 & mode; //bitmask to bits for rows
-    rows = rows >> 4; //shift 4 bits right to get number of rows
-
-}
-
-void loadPolyTable() {
-    int i = 0;
-    while (*polybius_alphabet != 0){
-        *(polybius_table + i) = *polybius_alphabet;
-        polybius_alphabet++;
-        i++;
-    }
 }
