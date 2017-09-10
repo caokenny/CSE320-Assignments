@@ -50,8 +50,46 @@ unsigned short validargs(int argc, char **argv) {
     if (**argv == 112) { //if -p flag
         argv++; //get argv[2]
         *argv += 1; //get the letter instead of -
+        if (**argv == 107) //if -k flag comes before -e or -d return an error
+            return 0x0000;
         if (**argv == 101){ //-e flag
             returnValue = 0x0000;
+            for (int i = 0; i < argc - 3; i++) {
+                argv++; //get argv[3]
+                *argv += 1;
+                if (**argv == 99) { //if -c flag
+                    argc -= 1;
+                    argv++; //get argv[4]
+                    sscanf(*argv, "%hu", &x); //parses string to short
+                    if (x < 9 || x > 15)
+                        return 0x0000;
+                    returnValue = returnValue | x; //bitwise or to change 0-4 LSB to the int given
+                }
+                else if (**argv == 114) { //if -r flag
+                    argc -= 1;
+                    argv++;
+                    sscanf(*argv, "%hu", &x);
+                    if (x < 9 || x > 15)
+                        return 0x0000;
+                    short rows;
+                    rows = x << 4; //Shift bits 4 to the left
+                    returnValue = returnValue | rows; //bitwise or to change 5-9 bits to the int given
+                }
+                else if (**argv == 107) { //if -k flag
+                    argv++; //get next element
+                    argc -= 1;
+                }
+                else return 0x0000;
+            }
+            if (returnValue == 0x0000){
+                return 0x00AA;
+            }
+            else{
+                return returnValue;
+            }
+        }
+        else if (**argv == 100) { //if -d flag
+            returnValue = 0x2000;
             for (int i = 0; i < argc - 3; i++) {;
                 argv++; //get argv[3]
                 *argv += 1;
@@ -59,52 +97,30 @@ unsigned short validargs(int argc, char **argv) {
                     argc -= 1;
                     argv++; //get argv[4]
                     sscanf(*argv, "%hu", &x); //parses string to short
+                    if (x < 9 || x > 15)
+                        return 0x0000;
                     returnValue = returnValue | x; //bitwise or to change 0-4 LSB to the int given
                 }
-                if (**argv == 114) { //if -r flag
+                else if (**argv == 114) { //if -r flag
                     argc -= 1;
                     argv++;
                     sscanf(*argv, "%hu", &x);
+                    if (x < 9 || x > 15)
+                        return 0x0000;
                     short rows;
                     rows = x << 4;
                     returnValue = returnValue | rows;
                 }
-            }
-            if (returnValue == 0x0000){
-                return 0x00AA;
-            }
-            else{
-                printf("%d\n", returnValue);
-                return returnValue;
-            }
-        }
-        else if (**argv == 100) { //if -d flag
-            returnValue = 0x2000;
-            argv++; //get argv[3]
-            *argv += 1;
-            while(1) {
-                if (**argv == 99) { //if -c flag
-                    argv++; //get argv[4]
-                    sscanf(*argv, "%hu", &x); //parses string to short
-                    returnValue = returnValue | x; //bitwise or to change 0-4 LSB to the int given
-                    argv++;
-                    *argv += 1;
+                else if (**argv == 107) { //if -k flag
+                    argv++; //get next element
+                    argc -= 1;
                 }
-                else if (**argv == 114) { //if -r flag
-                    argv++;
-                    sscanf(*argv, "%hu", &x);
-                    short rows;
-                    rows = x << 4;
-                    returnValue = returnValue | rows;
-                    argv++;
-                    *argv += 1;
-                }
-                else break;
+                else return 0x0000;
             }
             if (returnValue == 0x2000)
                 return 0x20AA;
             else return returnValue;
         }
     }
-    return 0x8000;
+    return 0x0000;
 }
