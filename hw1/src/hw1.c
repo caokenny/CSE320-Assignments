@@ -48,27 +48,9 @@ unsigned short validargs(int argc, char **argv) {
             argv++;
             *argv += 1;
             if (**argv == 107) { //if -k flag
-                printf("hi\n");
-                argv++; //get next element
-                argc -= 1;
-                key = *argv;
-                char *keyCompare = *argv; //variable that holds the key so we can compare
-                int keyCounter = 0; //counter
-                int keyBacktrack = 0;
-                while (*key != 0) { //while *key isn't NULL
-                    keyCompare++; //increment keyCompare by 1 so we get the next value so we don't compare the same letters
-                    while (*keyCompare != 0){ //while keyCompare isn't NULL
-                        if (*key == *keyCompare) return 0x0000; //here we compare one letter in the key to the rest of the string
-                        keyCounter++; //increment counter so we know how much to backtrack later
-                        keyCompare++; //increment to the next letter in the key
-                    }
-                    keyCompare -= keyCounter; //backtrack keyCompare
-                    keyCounter = 0; //set counter back to 0
-                    key++; //get the next letter in the key to compare
-                    keyBacktrack++;
-                }
-                key -= keyBacktrack;
-                return 0x4000;
+                if (argc - 5 != 0) return 0x0000;
+                int kValid = checkKeyValidF(argc, argv);
+                if (kValid == 1) return 0x4000;
             }
             else return 0x0000;
         }
@@ -78,31 +60,16 @@ unsigned short validargs(int argc, char **argv) {
             argv++;
             *argv += 1;
             if (**argv == 107) { //if -k flag
-                argv++; //get next element
-                argc -= 1;
-                key = *argv;
-                char *keyCompare = *argv; //variable that holds the key so we can compare
-                int keyCounter = 0; //counter
-                int keyBacktrack = 0;
-                while (*key != 0) { //while *key isn't NULL
-                    keyCompare++; //increment keyCompare by 1 so we get the next value so we don't compare the same letters
-                    while (*keyCompare != 0){ //while keyCompare isn't NULL
-                        if (*key == *keyCompare) return 0x0000; //here we compare one letter in the key to the rest of the string
-                        keyCounter++; //increment counter so we know how much to backtrack later
-                        keyCompare++; //increment to the next letter in the key
-                    }
-                    keyCompare -= keyCounter; //backtrack keyCompare
-                    keyCounter = 0; //set counter back to 0
-                    key++; //get the next letter in the key to compare
-                    keyBacktrack++;
-                }
-                key -= keyBacktrack;
-                return 0x6000;
+                if (argc - 5 != 0) return 0x0000;
+                int kValid = checkKeyValidF(argc, argv);
+                if (kValid == 1) return 0x6000;
             }
             else return 0x0000;
         }
         else return 0x0000;
     }
+
+
     if (**argv == 112) { //if -p flag
         if (argc - 2 == 0) return 0x0000; //return error too few argument
         argv++; //get argv[2]
@@ -133,25 +100,10 @@ unsigned short validargs(int argc, char **argv) {
                     returnValue = returnValue | rows; //bitwise or to change 5-9 bits to the int given
                 }
                 else if (**argv == 107) { //if -k flag
-                    argv++; //get next element
                     argc -= 1;
-                    key = *argv;
-                    char *keyCompare = *argv; //variable that holds the key so we can compare
-                    int keyCounter = 0; //counter
-                    int keyBacktrack = 0;
-                    while (*key != 0) { //while *key isn't NULL
-                        keyCompare++; //increment keyCompare by 1 so we get the next value so we don't compare the same letters
-                        while (*keyCompare != 0){ //while keyCompare isn't NULL
-                            if (*key == *keyCompare) return 0x0000; //here we compare one letter in the key to the rest of the string
-                            keyCounter++; //increment counter so we know how much to backtrack later
-                            keyCompare++; //increment to the next letter in the key
-                        }
-                        keyCompare -= keyCounter; //backtrack keyCompare
-                        keyCounter = 0; //set counter back to 0
-                        key++; //get the next letter in the key to compare
-                        keyBacktrack++;
-                    }
-                    key -= keyBacktrack;
+                    int kValid = checkKeyValidP(argc, argv);
+                    if (kValid == 0) return 0x0000;
+                    argv++;
                 }
                 else return 0x0000;
             }
@@ -186,8 +138,10 @@ unsigned short validargs(int argc, char **argv) {
                     returnValue = returnValue | rows;
                 }
                 else if (**argv == 107) { //if -k flag
-                    argv++; //get next element
                     argc -= 1;
+                    int kValid = checkKeyValidP(argc, argv);
+                    if (kValid == 0) return 0x0000;
+                    argv++;
                 }
                 else return 0x0000;
             }
@@ -197,4 +151,83 @@ unsigned short validargs(int argc, char **argv) {
         }
     }
     return 0x0000;
+}
+
+int checkKeyValidF(int argc, char **argv) {
+    argv++; //get next element
+    key = *argv;
+    char *keyCompare = *argv; //variable that holds the key so we can compare
+    int keyCounter = 0; //counter
+    int keyBacktrack = 0;
+    int k = 0;
+    while (*key != 0) { //while *key isn't NULL
+        keyCompare++; //increment keyCompare by 1 so we get the next value so we don't compare the same letters
+        while (*keyCompare != 0){ //while keyCompare isn't NULL
+            if (*key == *keyCompare) return 0; //here we compare one letter in the key to the rest of the string
+            keyCounter++; //increment counter so we know how much to backtrack later
+            keyCompare++; //increment to the next letter in the key
+        }
+        while (*fm_alphabet != 0){
+            if (*key == *fm_alphabet) {
+                k = 1;
+                break;
+            }
+            else fm_alphabet++;
+        }
+        if (k != 1) return 0;
+        keyCompare -= keyCounter; //backtrack keyCompare
+        keyCounter = 0; //set counter back to 0
+        key++; //get the next letter in the key to compare
+        keyBacktrack++;
+    }
+    key -= keyBacktrack;
+    return 1;
+}
+
+int checkKeyValidP (int argc, char **argv){
+    argv++; //get next element
+    key = *argv;
+    char *keyCompare = *argv; //variable that holds the key so we can compare
+    int keyCounter = 0; //counter
+    int keyBacktrack = 0;
+    int k = 0;
+    while (*key != 0) { //while *key isn't NULL
+        keyCompare++; //increment keyCompare by 1 so we get the next value so we don't compare the same letters
+        while (*keyCompare != 0){ //while keyCompare isn't NULL
+            if (*key == *keyCompare) return 0; //here we compare one letter in the key to the rest of the string
+            keyCounter++; //increment counter so we know how much to backtrack later
+            keyCompare++; //increment to the next letter in the key
+        }
+        while (*polybius_alphabet != 0){
+            if (*key == *polybius_alphabet) {
+                k = 1;
+                break;
+            }
+            else polybius_alphabet++;
+        }
+        if (k != 1) return 0;
+        keyCompare -= keyCounter; //backtrack keyCompare
+        keyCounter = 0; //set counter back to 0
+        key++; //get the next letter in the key to compare
+        keyBacktrack++;
+    }
+    key -= keyBacktrack;
+    return 1;
+}
+
+
+void ePolyCipher(unsigned short mode) {
+    int columns = 0x000F & mode; //bitmask to get number of columns
+    int rows = 0x00F0 & mode; //bitmask to bits for rows
+    rows = rows >> 4; //shift 4 bits right to get number of rows
+
+}
+
+void loadPolyTable() {
+    int i = 0;
+    while (*polybius_alphabet != 0){
+        *(polybius_table + i) = *polybius_alphabet;
+        polybius_alphabet++;
+        i++;
+    }
 }
