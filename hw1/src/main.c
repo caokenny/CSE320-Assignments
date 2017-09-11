@@ -17,6 +17,8 @@
 
 int main(int argc, char **argv)
 {
+    int returnSuccess = 0;
+
     unsigned short mode;
 
     mode = validargs(argc, argv);
@@ -44,7 +46,8 @@ int main(int argc, char **argv)
     }
 
     if (mode & 0x00FF) {
-        ePolyCipher(mode);
+        returnSuccess = ePolyCipher(mode);
+        if (returnSuccess == 0) return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
