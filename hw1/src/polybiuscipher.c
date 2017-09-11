@@ -61,7 +61,7 @@ int decrypt(char input, int rows, int columns) {
         return 1;
     }
     if (input == 10) {
-        printf("%c\n", 32);
+        printf("\n");
         inputTaken = 0;
         return 1;
     }
