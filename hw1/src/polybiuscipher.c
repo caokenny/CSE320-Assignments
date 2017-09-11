@@ -126,10 +126,12 @@ int checkIfInPAlphabet(char input) {
 
 void loadPolyTable(int rows, int columns) {
     int i = 0; //counter
+    int alphabetSize = 0;
     while (*polybius_alphabet != 0){ //stop when we hit null term
         *(polybius_table + i) = *polybius_alphabet; //using pointer arith. fill in the table
         polybius_alphabet++;
         i++;
+        alphabetSize++;
     }
     int extraSpace = rows * columns; //this is how much space we have left to fill in with null terms
     extraSpace = extraSpace - 94;
@@ -138,12 +140,13 @@ void loadPolyTable(int rows, int columns) {
         i++;
         extraSpace--;
     }
-    polybius_alphabet -= 94;
+    polybius_alphabet -= alphabetSize;
 }
 
 void loadPolyTableWithKey(int rows, int columns) {
     int i = 0;
     int itRepeats = 0;
+    int alphabetSize = 0;
     while (*key != 0) {
         *(polybius_table + i) = *key;
         key++;
@@ -154,12 +157,15 @@ void loadPolyTableWithKey(int rows, int columns) {
     keyCounter = 0;
     while (*polybius_alphabet != 0) {
         itRepeats = checkIfRepeating();
-        if (itRepeats == 1)
+        if (itRepeats == 1){
             polybius_alphabet++;
+            alphabetSize++;
+        }
         else {
             *(polybius_table + i) = *polybius_alphabet;
             polybius_alphabet++;
             i++;
+            alphabetSize++;
         }
     }
     int extraSpace = rows * columns;
@@ -169,7 +175,7 @@ void loadPolyTableWithKey(int rows, int columns) {
         i++;
         extraSpace--;
     }
-    polybius_alphabet -= 94;
+    polybius_alphabet -= alphabetSize;
 }
 
 int checkIfRepeating() {
