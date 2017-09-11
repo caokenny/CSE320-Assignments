@@ -18,6 +18,7 @@ int checkIfInPAlphabet(char input);
 int decrypt(char input, int rows, int columns);
 
 int fMorseCipher();
+int encryptMorseCode(char input);
 void loadMorseKey();
 void loadMorseKeyWithKey();
 void getAlphabetSize();

@@ -15,11 +15,34 @@
 int alphabetSize = 0;
 
 int fMorseCipher() {
+    char input;
+    int success = 0;
     getAlphabetSize();
     if (keyWasGiven == 1)
         loadMorseKeyWithKey();
     else loadMorseKey();
-    return 0;
+    while (input != EOF) {
+        input = fgetc(stdin);
+        if (input == EOF) break;
+        if (input == 10) break;
+        if (input != 32)
+            success = encryptMorseCode(input);
+        else printf("x");
+        if (success == 0) return 0;
+    }
+    return 1;
+}
+
+int encryptMorseCode(char input) {
+    int counter = 0;
+    while (1) {
+        if (*(fm_key + counter) == input) {
+            printf("%sx", *(morse_table + (counter + 32)));
+            break;
+        }
+        else counter++;
+    }
+    return 1;
 }
 
 void loadMorseKey() {
