@@ -15,5 +15,6 @@ void loadPolyTableWithKey(int rows, int columns);
 int checkIfRepeating();
 int encrypt(char input, int rows, int columns);
 int checkIfInPAlphabet(char input);
+int decrypt(char input, int rows, int columns);
 
 #endif

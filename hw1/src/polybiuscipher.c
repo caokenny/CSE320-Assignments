@@ -14,6 +14,10 @@
 
 int keyCounter = 0;
 
+int inputTaken = 0;
+
+int decryptIndex = 0;
+
 
 int ePolyCipher(unsigned short mode) {
     int success = 0;
@@ -25,11 +29,51 @@ int ePolyCipher(unsigned short mode) {
         loadPolyTableWithKey(rows, columns);
     }
     else loadPolyTable(rows, columns);
-    while (input != EOF) {
-        input = fgetc(stdin);
-        if (input == EOF) break;
-        success = encrypt(input, rows, columns);
-        if (success == 0) return 0;
+    if (mode & 0x2000) {
+        while (input != EOF) {
+            if (inputTaken >= 2) {
+                inputTaken = 0;
+                decryptIndex = 0;
+            }
+            inputTaken++;
+            input = fgetc(stdin);
+            if (input == EOF) break;
+            success = decrypt(input, rows, columns);
+            if (success == 0) return 0;
+        }
+        return 1;
+    }
+    else {
+        while (input != EOF) { //take input until EOF
+            input = fgetc(stdin);
+            if (input == EOF) break; //When EOF break
+            success = encrypt(input, rows, columns); //call encrypt function
+            if (success == 0) return 0; //if encrypt returns 0 return 0 to main
+        }
+        return 1; //otherwise return 1
+    }
+}
+
+int decrypt(char input, int rows, int columns) {
+    if (input == 32 || input == 9){
+        printf("%c", input);
+        inputTaken = 0;
+        return 1;
+    }
+    if (input == 10) {
+        printf("%c\n", 32);
+        inputTaken = 0;
+        return 1;
+    }
+    if (input < 65) input -= 48;
+    else input -= 55;
+    if (inputTaken == 1){
+        decryptIndex = input * columns;
+    }
+    if (inputTaken == 2) {
+        int i = input % columns;
+        decryptIndex += i;
+        printf("%c", *(polybius_table + decryptIndex));
     }
     return 1;
 }
@@ -39,23 +83,22 @@ int encrypt(char input, int rows, int columns) {
     int inputRow = -1;
     int inPAlphabet = 0;
     while (1) {
-        if (i%columns == 0) inputRow++;
-        if (input == 32 || input == 9) {
+        if (i%columns == 0) inputRow++; //When we hit number of columns we go to next row
+        if (input == 32 || input == 9) { //preserve white space
             printf("%c", input);
             break;
         }
-        if (input == 10) {
+        if (input == 10) { //preserve white space
             printf("%c\n", 32);
             break;
         }
-        inPAlphabet = checkIfInPAlphabet(input);
-        if (inPAlphabet == 0){
-            printf("NOT IN ALPHABET\n");
+        inPAlphabet = checkIfInPAlphabet(input); //check if input is in polybius_alphabet
+        if (inPAlphabet == 0){ //if not in alphabet return 0
             return 0;
         }
-        if (input == *(polybius_table + i)){
-            if (inputRow > 9) inputRow += 55;
-            if (inputRow <= 9) inputRow += 48;
+        if (input == *(polybius_table + i)){ //if input is in table
+            if (inputRow > 9) inputRow += 55; //add 55 to get ascii
+            if (inputRow <= 9) inputRow += 48; //add 48 to get ascii
             printf("%c", inputRow);
             if (i%columns <= 9) printf("%c", (i%columns) + 48);
             if (i%columns > 9) printf("%c", (i%columns) + 55);

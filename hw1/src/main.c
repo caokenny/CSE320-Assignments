@@ -33,22 +33,23 @@ int main(int argc, char **argv)
         USAGE(*argv, EXIT_SUCCESS);
     }
 
-    if (mode & 0x4000) {
+    /*if (mode & 0x4000) {
         printf("THIS IS SUPPOSED TO DO SOMETHING WITH -f and -e FLAG\n");
     }
 
     if (mode & 0x6000) {
         printf("THIS IS SUPPOSED TO DO SOMETHING WITH -f and -d FLAG\n");
-    }
+    }*/
 
-    if (mode & 0x20AA) {
-        printf("THIS DOES SOMETHING WITH -p and -d FLAG\n");
-    }
-
-    if (mode & 0x00AA) {
+    if (mode & 0x20FF) {
         returnSuccess = ePolyCipher(mode);
         if (returnSuccess == 0) return EXIT_FAILURE;
     }
+    else if (mode & 0x00FF) {
+        returnSuccess = ePolyCipher(mode);
+        if (returnSuccess == 0) return EXIT_FAILURE;
+    }
+    else return EXIT_FAILURE;
 
     return EXIT_SUCCESS;
 }
