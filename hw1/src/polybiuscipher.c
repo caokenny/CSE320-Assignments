@@ -49,7 +49,10 @@ int encrypt(char input, int rows, int columns) {
             break;
         }
         inPAlphabet = checkIfInPAlphabet(input);
-        if (inPAlphabet == 0) return 0;
+        if (inPAlphabet == 0){
+            printf("NOT IN ALPHABET\n");
+            return 0;
+        }
         if (input == *(polybius_table + i)){
             if (inputRow > 9) inputRow += 55;
             if (inputRow <= 9) inputRow += 48;

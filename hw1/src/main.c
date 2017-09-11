@@ -41,11 +41,11 @@ int main(int argc, char **argv)
         printf("THIS IS SUPPOSED TO DO SOMETHING WITH -f and -d FLAG\n");
     }
 
-    if (mode & 0x2000) {
+    if (mode & 0x20AA) {
         printf("THIS DOES SOMETHING WITH -p and -d FLAG\n");
     }
 
-    if (mode & 0x00FF) {
+    if (mode & 0x00AA) {
         returnSuccess = ePolyCipher(mode);
         if (returnSuccess == 0) return EXIT_FAILURE;
     }

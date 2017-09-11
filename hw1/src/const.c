@@ -5,8 +5,9 @@
  * will be at most 31 characters. Any characters which do not appear in the alphabet
  * string should be preserved.
 **/
-char *polybius_alphabet = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+//char *polybius_alphabet = "!\"#$%&'()*+,-./0123456789:;<=>?@ABDFGHIJKLMNOPQRTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 
+char *polybius_alphabet = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 // The Key for the Fractionated Morse encoding
 const char *fm_alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
