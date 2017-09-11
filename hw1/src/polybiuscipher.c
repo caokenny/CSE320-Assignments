@@ -16,6 +16,7 @@ int keyCounter = 0;
 
 
 void ePolyCipher(unsigned short mode) {
+    char input;
     int columns = 0x000F & mode; //bitmask to get number of columns
     int rows = 0x00F0 & mode; //bitmask to bits for rows
     rows = rows >> 4; //shift 4 bits right to get number of rows
@@ -24,6 +25,11 @@ void ePolyCipher(unsigned short mode) {
         loadPolyTableWithKey(rows, columns);
     }
     else loadPolyTable(rows, columns);
+    while (input != EOF) {
+        input = fgetc(stdin);
+        printf("YOU INPUT %c\n", input);
+    }
+
 }
 
 void loadPolyTable(int rows, int columns) {

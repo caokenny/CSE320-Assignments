@@ -31,7 +31,21 @@ int main(int argc, char **argv)
         USAGE(*argv, EXIT_SUCCESS);
     }
 
-    ePolyCipher(mode);
+    if (mode & 0x4000) {
+        printf("THIS IS SUPPOSED TO DO SOMETHING WITH -f and -e FLAG\n");
+    }
+
+    if (mode & 0x6000) {
+        printf("THIS IS SUPPOSED TO DO SOMETHING WITH -f and -d FLAG\n");
+    }
+
+    if (mode & 0x2000) {
+        printf("THIS DOES SOMETHING WITH -p and -d FLAG\n");
+    }
+
+    if (mode & 0x00FF) {
+        ePolyCipher(mode);
+    }
 
     return EXIT_SUCCESS;
 }
