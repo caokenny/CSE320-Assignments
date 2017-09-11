@@ -19,7 +19,7 @@ int inputTaken = 0;
 int decryptIndex = 0;
 
 
-int ePolyCipher(unsigned short mode) {
+int polyCipher(unsigned short mode) {
     int success = 0;
     char input;
     int columns = 0x000F & mode; //bitmask to get number of columns
