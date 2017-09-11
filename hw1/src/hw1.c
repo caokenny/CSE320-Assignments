@@ -32,6 +32,8 @@ int keyWasGiven = 0;
 unsigned short validargs(int argc, char **argv) {
     short x = 0;
     short returnValue;
+    short rows = 10;
+    short columns = 10;
     argv++;
     *argv += 1;
     //if -d, -e, -k, -r, or -c flag is first flag return error
@@ -92,6 +94,7 @@ unsigned short validargs(int argc, char **argv) {
                     sscanf(*argv, "%hu", &x); //parses string to short
                     if (x < 9 || x > 15)
                         return 0x0000;
+                    columns = x;
                     returnValue = returnValue | x; //bitwise or to change 0-4 LSB to the int given
                 }
                 else if (**argv == 114) { //if -r flag
@@ -100,9 +103,9 @@ unsigned short validargs(int argc, char **argv) {
                     sscanf(*argv, "%hu", &x);
                     if (x < 9 || x > 15)
                         return 0x0000;
-                    short rows;
                     rows = x << 4; //Shift bits 4 to the left
                     returnValue = returnValue | rows; //bitwise or to change 5-9 bits to the int given
+                    rows = x;
                 }
                 else if (**argv == 107) { //if -k flag
                     keyWasGiven = 1;
@@ -112,6 +115,10 @@ unsigned short validargs(int argc, char **argv) {
                     argv++;
                 }
                 else return 0x0000;
+            }
+            if (!(1 & checkIfValidRowsCols(rows, columns))) {
+                printf("Invalid rows/columns\n");
+                return 0x0000;
             }
             if (returnValue == 0x0000){
                 return 0x00AA;
@@ -158,6 +165,17 @@ unsigned short validargs(int argc, char **argv) {
         }
     }
     return 0x0000;
+}
+
+int checkIfValidRowsCols(short rows, short columns) {
+    int alphabetSize = 0;
+    while (*polybius_alphabet != 0) {
+        alphabetSize++;
+        polybius_alphabet++;
+    }
+    polybius_alphabet -= alphabetSize;
+    if (rows * columns < alphabetSize) return 0;
+    else return 1;
 }
 
 int checkKeyValidF(int argc, char **argv) {

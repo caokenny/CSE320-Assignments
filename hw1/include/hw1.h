@@ -9,6 +9,7 @@ int checkKeyValidF (int argc, char **argv);
 int checkKeyValidP (int argc, char **argv);
 
 int ePolyCipher(unsigned short mode);
+int checkIfValidRowsCols(short rows, short columns);
 void loadPolyTable(int rows, int columns);
 void loadPolyTableWithKey(int rows, int columns);
 int checkIfRepeating();
