@@ -97,11 +97,10 @@ int encrypt(char input, int rows, int columns) {
             return 0;
         }
         if (input == *(polybius_table + i)){ //if input is in table
-            if (inputRow > 9) inputRow += 55; //add 55 to get ascii
-            if (inputRow <= 9) inputRow += 48; //add 48 to get ascii
-            printf("%c", inputRow);
-            if (i%columns <= 9) printf("%c", (i%columns) + 48);
-            if (i%columns > 9) printf("%c", (i%columns) + 55);
+            //print the hexadecimal
+            printf("%X", inputRow);
+            if (i%columns <= 9) printf("%X", (i%columns));
+            if (i%columns > 9) printf("%X", (i%columns));
             break;
         }
         else i++;
