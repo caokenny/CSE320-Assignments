@@ -14,6 +14,10 @@
 
 int alphabetSize = 0;
 
+char *buffer = polybius_table;
+
+int bufferCounter = 0;
+
 int fMorseCipher() {
     char input;
     int success = 0;
@@ -24,11 +28,15 @@ int fMorseCipher() {
     while (input != EOF) {
         input = fgetc(stdin);
         if (input == EOF) break;
-        if (input == 32)
-            printf("x");
+        if (input == 32) {
+            *(buffer + bufferCounter) = 120;
+            bufferCounter++;
+        }
+            //printf("x");
         else success = encryptMorseCode(input);
         if (success == 0) return 0;
     }
+    printf("%s\n", buffer);
     return 1;
 }
 
@@ -36,11 +44,15 @@ int encryptMorseCode(char input) {
     int counter = 0;
     while (1) {
         if (input == 10) {
-            printf("x\n");
+            *(buffer + bufferCounter) = 10;
+            bufferCounter++;
+            //printf("x\n");
             break;
         }
         if (*(fm_key + counter) == input) {
-            printf("%sx", *(morse_table + (counter + 32)));
+            *(buffer + bufferCounter) = **(morse_table + (counter + 32));
+            bufferCounter++;
+            //printf("%sx", *(morse_table + (counter + 32)));
             break;
         }
         else counter++;
