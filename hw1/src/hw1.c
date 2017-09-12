@@ -120,6 +120,8 @@ unsigned short validargs(int argc, char **argv) {
                 printf("Invalid rows/columns\n");
                 return 0x0000;
             }
+            if ((0x000F & returnValue) == 0) returnValue = returnValue | 0x000A;
+            if ((0x00F0 & returnValue) == 0) returnValue = returnValue | 0x00A0;
             if (returnValue == 0x0000){
                 return 0x00AA;
             }
@@ -159,6 +161,8 @@ unsigned short validargs(int argc, char **argv) {
                 }
                 else return 0x0000;
             }
+            if ((0x000F & returnValue) == 0) returnValue = returnValue | 0x000A;
+            if ((0x00F0 & returnValue) == 0) returnValue = returnValue | 0x00A0;
             if (returnValue == 0x2000)
                 return 0x20AA;
             else return returnValue;

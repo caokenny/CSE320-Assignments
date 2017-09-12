@@ -23,6 +23,7 @@ int polyCipher(unsigned short mode) {
     int success = 0;
     char input;
     int columns = 0x000F & mode; //bitmask to get number of columns
+    printf("%d\n", columns);
     int rows = 0x00F0 & mode; //bitmask to bits for rows
     rows = rows >> 4; //shift 4 bits right to get number of rows
     if (keyWasGiven == 1) {
@@ -133,7 +134,7 @@ void loadPolyTable(int rows, int columns) {
         alphabetSize++;
     }
     int extraSpace = rows * columns; //this is how much space we have left to fill in with null terms
-    extraSpace = extraSpace - 94;
+    extraSpace -= alphabetSize;
     while (extraSpace != 0){
         *(polybius_table + i) = 0;
         i++;
