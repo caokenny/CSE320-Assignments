@@ -23,5 +23,6 @@ void loadMorseKey();
 void loadMorseKeyWithKey();
 void getAlphabetSize();
 int checkIfRepeatingMorse();
+int checkIfInFAlphabet(char input);
 
 #endif

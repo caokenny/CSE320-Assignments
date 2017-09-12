@@ -113,6 +113,7 @@ int checkIfInPAlphabet(char input) {
     while (*polybius_alphabet != 0){
         if (input == *polybius_alphabet){
             polybius_alphabet -= polyCounter;
+            polyCounter = 0;
             return 1;
         }
         else {

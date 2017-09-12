@@ -39,6 +39,9 @@ int fMorseCipher() {
 }
 
 int encryptMorseCode(char input) {
+    if (!(1 & checkIfInFAlphabet(input))) {
+        return 0;
+    }
     int counter = 0;
     int morseTableCounter = 0;
     while (1) {
@@ -50,7 +53,6 @@ int encryptMorseCode(char input) {
             break;
         }
         while (**(morse_table + (input - 33)) != 0){
-            //printf("%d\n", **(morse_table + (input - 33)));
             *(buffer + bufferCounter) = **(morse_table + (input - 33));
             bufferCounter++;
             *(morse_table + (input - 33)) += 1;
@@ -142,5 +144,21 @@ int checkIfRepeatingMorse() {
         keyBackTrack++;
     }
     key -= keyBackTrack;
+    return 0;
+}
+
+int checkIfInFAlphabet(char input) {
+    int fCounter = 0;
+    while (*fm_alphabet != 0){
+        if (input == *fm_alphabet){
+            fm_alphabet -= fCounter;
+            fCounter = 0;
+            return 1;
+        }
+        else {
+            fm_alphabet++;
+            fCounter++;
+        }
+    }
     return 0;
 }

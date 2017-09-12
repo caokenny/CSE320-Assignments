@@ -37,17 +37,14 @@ int main(int argc, char **argv)
         printf("-f -d\n");
     }
     else if (mode & 0x4000) { //-f -e
-        printf("-f -e\n");
         returnSuccess = fMorseCipher(mode);
         if (returnSuccess == 0) return EXIT_FAILURE;
     }
     else if (mode & 0x2000) { //-p -d
-        printf("-p -d\n");
         returnSuccess = polyCipher(mode);
         if (returnSuccess == 0) return EXIT_FAILURE;
     }
     else { //-p -e
-        printf("-p -e\n");
         returnSuccess = polyCipher(mode);
         if (returnSuccess == 0) return EXIT_FAILURE;
     }
