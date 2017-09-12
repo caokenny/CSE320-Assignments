@@ -32,7 +32,6 @@ int fMorseCipher() {
             *(buffer + bufferCounter) = 120;
             bufferCounter++;
         }
-            //printf("x");
         else success = encryptMorseCode(input);
         if (success == 0) return 0;
     }
@@ -44,18 +43,20 @@ int encryptMorseCode(char input) {
     int counter = 0;
     while (1) {
         if (input == 10) {
+            *(buffer + bufferCounter) = 120;
+            bufferCounter++;
             *(buffer + bufferCounter) = 10;
             bufferCounter++;
-            //printf("x\n");
             break;
         }
-        if (*(fm_key + counter) == input) {
-            *(buffer + bufferCounter) = **(morse_table + (counter + 32));
+        while (**(morse_table + (input - 33)) != 0){
+            *(buffer + bufferCounter) = **(morse_table + (input - 33));
             bufferCounter++;
-            //printf("%sx", *(morse_table + (counter + 32)));
-            break;
+            *(morse_table + (input - 33)) += 1;
         }
-        else counter++;
+        *(buffer + bufferCounter) = 120;
+        bufferCounter++;
+        return 1;
     }
     return 1;
 }
