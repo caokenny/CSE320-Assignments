@@ -66,34 +66,26 @@ int encryptMorseCode(char input) {
     int fracTableCounter = 0;
     int fracBackTrack = 0;
     while (newBuffCounter != bufferCounter - 1) {
-        //printf("%d == %d?\n", newBuffCounter, bufferCounter);
-        //while (*fractionated_table != 0) {
-            //printf("%d == %d\n", *(buffer + newBuffCounter), **(fractionated_table + fracTableCounter) );
-        //printf("%d\n", *(buffer + newBuffCounter));
-            if (*(buffer + newBuffCounter) == **(fractionated_table + fracTableCounter)) {
-                newBuffCounter++;
-                //printf("%d == %d?\n", newBuffCounter, bufferCounter);
-                *(fractionated_table + fracTableCounter) += 1;
-                fracBackTrack++;
-                if ((newBuffCounter%3) == 0 && newBuffCounter != 0){
-                    //printf("HELLO\n");
-                    printf("%c", *(fm_key + fracTableCounter));
-                    //printf("HELLO\n");
-                    *(fractionated_table + fracTableCounter) -= fracBackTrack;
-                    fracBackTrack = 0;
-                    fracTableCounter = 0;
-                }
-                if (*(buffer + newBuffCounter) == 10) {
-                    printf("\n");
-                }
-            }
-            else {
-                newBuffCounter -= (newBuffCounter % 3);
+        if (*(buffer + newBuffCounter) == **(fractionated_table + fracTableCounter)) {
+            newBuffCounter++;
+            *(fractionated_table + fracTableCounter) += 1;
+            fracBackTrack++;
+            if ((newBuffCounter%3) == 0 && newBuffCounter != 0){
+                printf("%c", *(fm_key + fracTableCounter));
                 *(fractionated_table + fracTableCounter) -= fracBackTrack;
                 fracBackTrack = 0;
-                fracTableCounter++;
+                fracTableCounter = 0;
             }
-        //}
+            if (*(buffer + newBuffCounter) == 10) {
+                printf("\n");
+            }
+        }
+        else {
+            newBuffCounter -= (newBuffCounter % 3);
+            *(fractionated_table + fracTableCounter) -= fracBackTrack;
+            fracBackTrack = 0;
+            fracTableCounter++;
+        }
     }
     return 1;
 }
