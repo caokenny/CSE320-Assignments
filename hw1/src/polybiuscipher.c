@@ -23,7 +23,6 @@ int polyCipher(unsigned short mode) {
     int success = 0;
     char input;
     int columns = 0x000F & mode; //bitmask to get number of columns
-    printf("%d\n", columns);
     int rows = 0x00F0 & mode; //bitmask to bits for rows
     rows = rows >> 4; //shift 4 bits right to get number of rows
     if (keyWasGiven == 1) {
