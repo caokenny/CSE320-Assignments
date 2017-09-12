@@ -58,6 +58,33 @@ int encryptMorseCode(char input) {
         bufferCounter++;
         return 1;
     }
+    int newBuffCounter = 0;
+    int fracTableCounter = 0;
+    int fracBackTrack = 0;
+    while (newBuffCounter != bufferCounter) {
+        //while (*fractionated_table != 0) {
+            //printf("%d == %d\n", *(buffer + newBuffCounter), **(fractionated_table + fracTableCounter) );
+            if (*(buffer + newBuffCounter) == **(fractionated_table + fracTableCounter)) {
+                //printf("%s\n", *fractionated_table);
+                newBuffCounter++;
+                printf("%d == %d?\n", newBuffCounter, bufferCounter);
+                *(fractionated_table + fracTableCounter) += 1;
+                fracBackTrack++;
+                if ((newBuffCounter%3) == 0 && newBuffCounter != 0){
+                    printf("%c\n", *(fm_key + fracTableCounter));
+                    *(fractionated_table + fracTableCounter) -= fracBackTrack;
+                    fracBackTrack = 0;
+                    fracTableCounter = 0;
+                }
+            }
+            else {
+                newBuffCounter -= (newBuffCounter % 3);
+                *(fractionated_table + fracTableCounter) -= fracBackTrack;
+                fracBackTrack = 0;
+                fracTableCounter++;
+            }
+        //}
+    }
     return 1;
 }
 
