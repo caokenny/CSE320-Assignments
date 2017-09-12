@@ -33,24 +33,24 @@ int main(int argc, char **argv)
         USAGE(*argv, EXIT_SUCCESS);
     }
 
-    if (mode & 0x4000) {
+    if (mode & 0x4000 && mode & 0x2000) { //-f -d
+        printf("-f -d\n");
+    }
+    else if (mode & 0x4000) { //-f -e
+        printf("-f -e\n");
         returnSuccess = fMorseCipher(mode);
         if (returnSuccess == 0) return EXIT_FAILURE;
     }
-
-    if (mode & 0x6000) {
-        printf("THIS IS SUPPOSED TO DO SOMETHING WITH -f and -d FLAG\n");
-    }
-
-    /*if (mode & 0x20FF) {
+    else if (mode & 0x2000) { //-p -d
+        printf("-p -d\n");
         returnSuccess = polyCipher(mode);
         if (returnSuccess == 0) return EXIT_FAILURE;
     }
-    else if (mode & 0x00FF) {
+    else { //-p -e
+        printf("-p -e\n");
         returnSuccess = polyCipher(mode);
         if (returnSuccess == 0) return EXIT_FAILURE;
     }
-    else return EXIT_FAILURE;*/
 
     return EXIT_SUCCESS;
 }

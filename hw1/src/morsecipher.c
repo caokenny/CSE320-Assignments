@@ -24,10 +24,9 @@ int fMorseCipher() {
     while (input != EOF) {
         input = fgetc(stdin);
         if (input == EOF) break;
-        if (input == 10) break;
-        if (input != 32)
-            success = encryptMorseCode(input);
-        else printf("x");
+        if (input == 32)
+            printf("x");
+        else success = encryptMorseCode(input);
         if (success == 0) return 0;
     }
     return 1;
@@ -36,6 +35,10 @@ int fMorseCipher() {
 int encryptMorseCode(char input) {
     int counter = 0;
     while (1) {
+        if (input == 10) {
+            printf("x\n");
+            break;
+        }
         if (*(fm_key + counter) == input) {
             printf("%sx", *(morse_table + (counter + 32)));
             break;
