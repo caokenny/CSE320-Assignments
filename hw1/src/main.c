@@ -35,6 +35,8 @@ int main(int argc, char **argv)
 
     if (mode & 0x4000 && mode & 0x2000) { //-f -d
         printf("-f -d\n");
+        returnSuccess = fMorseCipher(mode);
+        if (returnSuccess == 0) return EXIT_FAILURE;
     }
     else if (mode & 0x4000) { //-f -e
         returnSuccess = fMorseCipher(mode);

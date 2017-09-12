@@ -109,6 +109,7 @@ int encrypt(char input, int rows, int columns) {
 }
 
 int checkIfInPAlphabet(char input) {
+    if (input == 32 || input == 10) return 1;
     int polyCounter = 0;
     while (*polybius_alphabet != 0){
         if (input == *polybius_alphabet){

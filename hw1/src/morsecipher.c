@@ -18,28 +18,34 @@ char *buffer = polybius_table;
 
 int bufferCounter = 0;
 
-int fMorseCipher() {
+int fMorseCipher(unsigned short mode) {
     char input;
     int success = 0;
     getAlphabetSize();
     if (keyWasGiven == 1)
         loadMorseKeyWithKey();
     else loadMorseKey();
-    while (input != EOF) {
-        input = fgetc(stdin);
-        if (input == EOF) break;
-        if (input == 32) {
-            *(buffer + bufferCounter) = 120;
-            bufferCounter++;
+    if (mode & 0x4000 && mode & 0x2000) {
+        printf("HI\n");
+    }
+    else {
+        while (input != EOF) {
+            input = fgetc(stdin);
+            if (input == EOF) break;
+            if (input == 32) {
+                *(buffer + bufferCounter) = 120;
+                bufferCounter++;
+            }
+            else success = encryptMorseCode(input);
+            if (success == 0) return 0;
         }
-        else success = encryptMorseCode(input);
-        if (success == 0) return 0;
     }
     return 1;
 }
 
 int encryptMorseCode(char input) {
     if (!(1 & checkIfInFAlphabet(input))) {
+        printf("NOT IN ALPHABET\n");
         return 0;
     }
     int counter = 0;
@@ -67,6 +73,9 @@ int encryptMorseCode(char input) {
     int newBuffCounter = 0;
     int fracTableCounter = 0;
     int fracBackTrack = 0;
+    //if (bufferCounter % 3 != 0) {
+    //    bufferCounter -= (bufferCounter%3);
+    //}
     while (newBuffCounter != bufferCounter - 1) {
         if (*(buffer + newBuffCounter) == **(fractionated_table + fracTableCounter)) {
             newBuffCounter++;
@@ -148,6 +157,7 @@ int checkIfRepeatingMorse() {
 }
 
 int checkIfInFAlphabet(char input) {
+    if (input == 32 || input == 10) return 1;
     int fCounter = 0;
     while (*fm_alphabet != 0){
         if (input == *fm_alphabet){
