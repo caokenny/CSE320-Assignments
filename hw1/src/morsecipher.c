@@ -18,6 +18,8 @@ char *buffer = polybius_table;
 
 int bufferCounter = 0;
 
+int lastCharWasX = 0;
+
 int fMorseCipher(unsigned short mode) {
     char input;
     int success = 0;
@@ -55,7 +57,10 @@ int fMorseCipher(unsigned short mode) {
 int decryptMorseCode(char input) {
     int fmkeyCounter = 0;
     int fracBackTrack = 0;
-    if (input == 10) return 1;
+    if (input == 10) {
+        printf("\n");
+        return 1;
+    }
     while(1) {
         if (input == *(fm_key + fmkeyCounter)) {
             while(**(fractionated_table + fmkeyCounter) != 0) {
@@ -64,6 +69,7 @@ int decryptMorseCode(char input) {
                 fracBackTrack++;
                 bufferCounter++;
             }
+            printf("INPUT %c = %s\n", input, buffer);
             if (*(buffer + (bufferCounter - 1)) == 120) {
                 secondDecryption();
                 if (bufferCounter != 0) clearBuffer();
@@ -85,7 +91,10 @@ void secondDecryption() {
     int bufferOriginalPosition = 0;
     int morseTableBackTrack = 0;
     while(1) {
-        if (*(buffer + bufferCounter) == 120 && bufferCounter == 0) bufferCounter++;
+        if (*(buffer + bufferCounter) == 120 && bufferCounter == 0){
+            bufferCounter++;
+            if (lastCharWasX == 1) printf("%c", 32);
+        }
         //printf("\nbuffer[%d] = %c == morse_table[%d] = %c\n", bufferCounter, *(buffer + bufferCounter), morseTableCounter, **(morse_table + morseTableCounter));
         if (*(buffer + bufferCounter) == **(morse_table + morseTableCounter)) {
             bufferCounter++;
@@ -93,8 +102,13 @@ void secondDecryption() {
             *(morse_table + morseTableCounter) += 1;
             morseTableBackTrack++;
             if (*(buffer + bufferCounter) == 120 && **(morse_table + morseTableCounter) == 0) {
-                printf("%c", morseTableCounter + 33);
+                printf("%c\n", morseTableCounter + 33);
                 bufferCounter++;
+                if (*(buffer + bufferCounter) == 120) {
+                    printf("%c", 32);
+                    lastCharWasX = 0;
+                }
+                else lastCharWasX = 1;
                 *(morse_table + morseTableCounter) -= morseTableBackTrack;
                 morseTableCounter = 0;
                 morseTableBackTrack = 0;
@@ -105,6 +119,7 @@ void secondDecryption() {
                 if (*(buffer + bufferCounter) == 120 && *(buffer + (bufferCounter + 1))) {
                     printf("%c", 32);
                     bufferCounter += 2;
+                    lastCharWasX = 0;
                 }
                 break;
             }
