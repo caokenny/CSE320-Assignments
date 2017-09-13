@@ -70,7 +70,6 @@ int decryptMorseCode(char input) {
                 fracBackTrack++;
                 bufferCounter++;
             }
-            //printf("INPUT %c = %s\n", input, buffer);
             if (*(buffer + (bufferCounter - 1)) == 120) {
                 secondDecryption();
                 if (bufferCounter != 0) clearBuffer();
@@ -159,17 +158,15 @@ int encryptMorseCode(char input) {
     }
     int counter = 0;
     int morseTableCounter = 0;
+    char checkNextInput;
     while (1) {
         if ((bufferCounter%3) == 0 && bufferCounter != 0) {
             secondEncryption();
-            bufferCounter = 0;
+            clearBuffer();
             continue;
         }
         if (input == 10) {
-            *(buffer + bufferCounter) = 120;
-            bufferCounter++;
-            *(buffer + bufferCounter) = 10;
-            bufferCounter++;
+            printf("%c", 10);
             break;
         }
         while (**(morse_table + (input - 33)) != 0){
@@ -182,17 +179,31 @@ int encryptMorseCode(char input) {
         morseTableCounter = 0;
         *(buffer + bufferCounter) = 120;
         bufferCounter++;
+        checkNextInput = fgetc(stdin);
+        if (checkNextInput == 10) {
+            *(buffer + bufferCounter) = 120;
+            bufferCounter++;
+            secondEncryption();
+            clearBuffer();
+        }
+        ungetc(checkNextInput, stdin);
         return 1;
     }
     secondEncryption();
+    clearBuffer();
     return 1;
 }
 
 void secondEncryption() {
+    //printf("%s\n", buffer);
     int newBuffCounter = 0;
     int fracTableCounter = 0;
     int fracBackTrack = 0;
+    //printf("%s\n", buffer);
+    bufferCounter -= (bufferCounter%3);
     while (newBuffCounter != bufferCounter) {
+        //printf("THIS IS IT [%d] = %c\n", newBuffCounter, *(buffer + newBuffCounter));
+        //printf("BUFFER[%d] = %c == Frac = %c\n", newBuffCounter, *(buffer + newBuffCounter), **(fractionated_table + fracTableCounter));
         if (*(buffer + newBuffCounter) == **(fractionated_table + fracTableCounter)) {
             newBuffCounter++;
             *(fractionated_table + fracTableCounter) += 1;
