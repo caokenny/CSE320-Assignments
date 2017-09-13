@@ -49,7 +49,6 @@ int fMorseCipher(unsigned short mode) {
             if (success == 0) return 0;
         }
     }
-    printf("%s\n", buffer);
     return 1;
 }
 
@@ -66,9 +65,8 @@ int decryptMorseCode(char input) {
                 bufferCounter++;
             }
             if (*(buffer + (bufferCounter - 1)) == 120) {
-                printf("%s\n", buffer);
                 secondDecryption();
-                bufferCounter = 0;
+                if (bufferCounter != 0) clearBuffer();
             }
             *(fractionated_table + fmkeyCounter) -= fracBackTrack;
             fracBackTrack = 0;
@@ -84,29 +82,49 @@ int decryptMorseCode(char input) {
 void secondDecryption() {
     bufferCounter = 0;
     int morseTableCounter = 0;
-    //int bufferOriginalPosition = 0;
+    int bufferOriginalPosition = 0;
     int morseTableBackTrack = 0;
     while(1) {
-        //printf("COMPARING %c == morse_table[%d] = %c\n", *(buffer + bufferCounter), morseTableCounter, **(morse_table + morseTableCounter));
-        if (*(buffer + bufferCounter) == 120) bufferCounter++;
+        if (*(buffer + bufferCounter) == 120 && bufferCounter == 0) bufferCounter++;
+        //printf("\nbuffer[%d] = %c == morse_table[%d] = %c\n", bufferCounter, *(buffer + bufferCounter), morseTableCounter, **(morse_table + morseTableCounter));
         if (*(buffer + bufferCounter) == **(morse_table + morseTableCounter)) {
             bufferCounter++;
-            //bufferOriginalPosition++;
+            bufferOriginalPosition++;
             *(morse_table + morseTableCounter) += 1;
             morseTableBackTrack++;
             if (*(buffer + bufferCounter) == 120 && **(morse_table + morseTableCounter) == 0) {
                 printf("%c", morseTableCounter + 33);
+                bufferCounter++;
+                *(morse_table + morseTableCounter) -= morseTableBackTrack;
+                morseTableCounter = 0;
+                morseTableBackTrack = 0;
+                if (*(buffer + bufferCounter) == 45 || *(buffer + bufferCounter) == 46) {
+                    bufferOriginalPosition = 0;
+                    continue;
+                }
+                if (*(buffer + bufferCounter) == 120 && *(buffer + (bufferCounter + 1))) {
+                    printf("%c", 32);
+                    bufferCounter += 2;
+                }
                 break;
             }
         }
         else {
-            bufferCounter = 0;
-            //bufferOriginalPosition = 0;
+            bufferCounter -= bufferOriginalPosition;
+            bufferOriginalPosition = 0;
             *(morse_table + morseTableCounter) -= morseTableBackTrack;
             morseTableBackTrack = 0;
             morseTableCounter++;
         }
     }
+}
+
+void clearBuffer() {
+    while(bufferCounter > -1){
+        *(buffer + bufferCounter) = 0;
+        bufferCounter--;
+    }
+    bufferCounter = 0;
 }
 
 int encryptMorseCode(char input) {

@@ -27,5 +27,6 @@ int checkIfRepeatingMorse();
 int checkIfInFAlphabet(char input);
 void secondEncryption();
 void secondDecryption();
+void clearBuffer();
 
 #endif
