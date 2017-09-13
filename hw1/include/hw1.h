@@ -26,5 +26,6 @@ void getAlphabetSize();
 int checkIfRepeatingMorse();
 int checkIfInFAlphabet(char input);
 void secondEncryption();
+void secondDecryption();
 
 #endif

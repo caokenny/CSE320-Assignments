@@ -26,7 +26,12 @@ int fMorseCipher(unsigned short mode) {
         loadMorseKeyWithKey();
     else loadMorseKey();
     if (mode & 0x4000 && mode & 0x2000) {
-        printf("HI\n");
+        while (input != EOF) {
+            input = fgetc(stdin);
+            if (input == EOF) break;
+            success = decryptMorseCode(input);
+            if (success == 0) return 0;
+        }
     }
     else {
         while (input != EOF) {
@@ -44,7 +49,64 @@ int fMorseCipher(unsigned short mode) {
             if (success == 0) return 0;
         }
     }
+    printf("%s\n", buffer);
     return 1;
+}
+
+int decryptMorseCode(char input) {
+    int fmkeyCounter = 0;
+    int fracBackTrack = 0;
+    if (input == 10) return 1;
+    while(1) {
+        if (input == *(fm_key + fmkeyCounter)) {
+            while(**(fractionated_table + fmkeyCounter) != 0) {
+                *(buffer + bufferCounter) = **(fractionated_table + fmkeyCounter);
+                *(fractionated_table + fmkeyCounter) += 1;
+                fracBackTrack++;
+                bufferCounter++;
+            }
+            if (*(buffer + (bufferCounter - 1)) == 120) {
+                printf("%s\n", buffer);
+                secondDecryption();
+                bufferCounter = 0;
+            }
+            *(fractionated_table + fmkeyCounter) -= fracBackTrack;
+            fracBackTrack = 0;
+            break;
+        }
+        else {
+            fmkeyCounter++;
+        }
+    }
+    return 1;
+}
+
+void secondDecryption() {
+    bufferCounter = 0;
+    int morseTableCounter = 0;
+    //int bufferOriginalPosition = 0;
+    int morseTableBackTrack = 0;
+    while(1) {
+        //printf("COMPARING %c == morse_table[%d] = %c\n", *(buffer + bufferCounter), morseTableCounter, **(morse_table + morseTableCounter));
+        if (*(buffer + bufferCounter) == 120) bufferCounter++;
+        if (*(buffer + bufferCounter) == **(morse_table + morseTableCounter)) {
+            bufferCounter++;
+            //bufferOriginalPosition++;
+            *(morse_table + morseTableCounter) += 1;
+            morseTableBackTrack++;
+            if (*(buffer + bufferCounter) == 120 && **(morse_table + morseTableCounter) == 0) {
+                printf("%c", morseTableCounter + 33);
+                break;
+            }
+        }
+        else {
+            bufferCounter = 0;
+            //bufferOriginalPosition = 0;
+            *(morse_table + morseTableCounter) -= morseTableBackTrack;
+            morseTableBackTrack = 0;
+            morseTableCounter++;
+        }
+    }
 }
 
 int encryptMorseCode(char input) {
