@@ -19,6 +19,7 @@ int decrypt(char input, int rows, int columns);
 
 int fMorseCipher(unsigned short mode);
 int encryptMorseCode(char input);
+int decryptMorseCode(char input);
 void loadMorseKey();
 void loadMorseKeyWithKey();
 void getAlphabetSize();

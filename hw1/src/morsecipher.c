@@ -163,17 +163,8 @@ int checkIfRepeatingMorse() {
 
 int checkIfInFAlphabet(char input) {
     if (input == 32 || input == 10) return 1;
-    int fCounter = 0;
-    while (*fm_alphabet != 0){
-        if (input == *fm_alphabet){
-            fm_alphabet -= fCounter;
-            fCounter = 0;
-            return 1;
-        }
-        else {
-            fm_alphabet++;
-            fCounter++;
-        }
+    if (**(morse_table + (input - 33)) != 0) {
+        return 1;
     }
     return 0;
 }
