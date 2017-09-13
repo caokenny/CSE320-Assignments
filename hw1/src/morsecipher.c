@@ -49,12 +49,16 @@ int fMorseCipher(unsigned short mode) {
 
 int encryptMorseCode(char input) {
     if (!(1 & checkIfInFAlphabet(input))) {
-        printf("NOT IN ALPHABET\n");
         return 0;
     }
     int counter = 0;
     int morseTableCounter = 0;
     while (1) {
+        if ((bufferCounter%3) == 0 && bufferCounter != 0) {
+            secondEncryption();
+            bufferCounter = 0;
+            continue;
+        }
         if (input == 10) {
             *(buffer + bufferCounter) = 120;
             bufferCounter++;
@@ -74,12 +78,14 @@ int encryptMorseCode(char input) {
         bufferCounter++;
         return 1;
     }
+    secondEncryption();
+    return 1;
+}
+
+void secondEncryption() {
     int newBuffCounter = 0;
     int fracTableCounter = 0;
     int fracBackTrack = 0;
-    //if ((bufferCounter - 1) % 3 != 0) {
-    //    bufferCounter -= ((bufferCounter - 1)%3);
-    //}
     while (newBuffCounter != bufferCounter) {
         if (*(buffer + newBuffCounter) == **(fractionated_table + fracTableCounter)) {
             newBuffCounter++;
@@ -103,7 +109,6 @@ int encryptMorseCode(char input) {
             fracTableCounter++;
         }
     }
-    return 1;
 }
 
 void loadMorseKey() {
