@@ -33,10 +33,14 @@ int fMorseCipher(unsigned short mode) {
             input = fgetc(stdin);
             if (input == EOF) break;
             if (input == 32) {
-                *(buffer + bufferCounter) = 120;
-                bufferCounter++;
+                if (*(buffer + (bufferCounter - 2)) != 120){
+                    *(buffer + bufferCounter) = 120;
+                    bufferCounter++;
+                }
             }
-            else success = encryptMorseCode(input);
+            else {
+                success = encryptMorseCode(input);
+            }
             if (success == 0) return 0;
         }
     }
@@ -73,10 +77,10 @@ int encryptMorseCode(char input) {
     int newBuffCounter = 0;
     int fracTableCounter = 0;
     int fracBackTrack = 0;
-    //if (bufferCounter % 3 != 0) {
-    //    bufferCounter -= (bufferCounter%3);
+    //if ((bufferCounter - 1) % 3 != 0) {
+    //    bufferCounter -= ((bufferCounter - 1)%3);
     //}
-    while (newBuffCounter != bufferCounter - 1) {
+    while (newBuffCounter != bufferCounter) {
         if (*(buffer + newBuffCounter) == **(fractionated_table + fracTableCounter)) {
             newBuffCounter++;
             *(fractionated_table + fracTableCounter) += 1;
@@ -89,6 +93,7 @@ int encryptMorseCode(char input) {
             }
             if (*(buffer + newBuffCounter) == 10) {
                 printf("\n");
+                break;
             }
         }
         else {
