@@ -57,6 +57,7 @@ int fMorseCipher(unsigned short mode) {
 int decryptMorseCode(char input) {
     int fmkeyCounter = 0;
     int fracBackTrack = 0;
+    char checkNextInput;
     if (input == 10) {
         printf("\n");
         return 1;
@@ -69,10 +70,16 @@ int decryptMorseCode(char input) {
                 fracBackTrack++;
                 bufferCounter++;
             }
-            printf("INPUT %c = %s\n", input, buffer);
+            //printf("INPUT %c = %s\n", input, buffer);
             if (*(buffer + (bufferCounter - 1)) == 120) {
                 secondDecryption();
                 if (bufferCounter != 0) clearBuffer();
+            }
+            else {
+                checkNextInput = fgetc(stdin);
+                //printf("NEXT INPUT = %d\n", checkNextInput);
+                if (checkNextInput == 10) secondDecryption();
+                ungetc(checkNextInput, stdin);
             }
             *(fractionated_table + fmkeyCounter) -= fracBackTrack;
             fracBackTrack = 0;
@@ -101,8 +108,8 @@ void secondDecryption() {
             bufferOriginalPosition++;
             *(morse_table + morseTableCounter) += 1;
             morseTableBackTrack++;
-            if (*(buffer + bufferCounter) == 120 && **(morse_table + morseTableCounter) == 0) {
-                printf("%c\n", morseTableCounter + 33);
+            if ((*(buffer + bufferCounter) == 120 || *(buffer + bufferCounter) == 0) && **(morse_table + morseTableCounter) == 0) {
+                printf("%c", morseTableCounter + 33);
                 bufferCounter++;
                 if (*(buffer + bufferCounter) == 120) {
                     printf("%c", 32);
