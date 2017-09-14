@@ -61,7 +61,7 @@ int decrypt(char input, int rows, int columns) {
         return 1;
     }
     if (input == 10) {
-        printf("\n");
+        printf("%c", 10);
         inputTaken = 0;
         return 1;
     }
@@ -89,7 +89,7 @@ int encrypt(char input, int rows, int columns) {
             break;
         }
         if (input == 10) { //preserve white space
-            printf("%c\n", 32);
+            printf("%c", 10);
             break;
         }
         inPAlphabet = checkIfInPAlphabet(input); //check if input is in polybius_alphabet
