@@ -171,4 +171,4 @@ utf16_glyph_t code_point_to_utf16be_glyph(code_point_t code_point, size_t *size_
             "OUTPUT_FILE Output file\n"                                        \
             "            Will contain a Byte Order Marking (BOM)\n",           \
             (prog_name));                                                      \
-  } while (0)
+  } while (0);

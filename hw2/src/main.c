@@ -2,6 +2,7 @@
 #include "utf.h"
 #include "wrappers.h"
 #include <stdlib.h>
+//#include <stdint.h>
 
 int
 main(int argc, char *argv[])
@@ -17,10 +18,10 @@ main(int argc, char *argv[])
   lseek(SEEK_SET, program_state->bom_length, infile); /* Discard BOM */
   get_encoding_function()(infile, outfile);
   if(program_state != NULL) {
-    close((int)program_state);
+    close((uintptr_t)program_state);
   }
   //I think this is how this works
-  free((void*)outfile);
-  free((void*)infile);
+  //free((void*)outfile);
+  //free((void*)infile);
   return EXIT_SUCCESS;
 }
