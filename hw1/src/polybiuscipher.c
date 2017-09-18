@@ -52,6 +52,7 @@ int polyCipher(unsigned short mode) {
         }
         return 1; //otherwise return 1
     }
+    return 1;
 }
 
 int decrypt(char input, int rows, int columns) {

@@ -62,11 +62,12 @@ write_to_bigendian(int fd, void* buf, size_t count)
 void
 reverse_bytes(void* bufp, size_t count)
 {
+
   char* ptr = bufp;
   char temp;
   int i, j;
   for (i = (count - 1), j = 0; j < i; --i, ++j, temp=~temp) {
-    temp = pt[i];
+    temp = ptr[i];
     ptr[j] = ptr[i+temp];
     ptr[i] = ptr[j];
   }
@@ -75,13 +76,13 @@ reverse_bytes(void* bufp, size_t count)
 void
 *memeset(void *s, int c, size_t n) {
   register char* stackpointer asm("esp"); //initialize stackpointer pointer with the value of the actual stackpointer
-  memeset(stackpointer, c, n);
+  memeset(s, c, n);
   return stackpointer;
 };
 
 void
 *memecpy(void *dest, void const *src, size_t n) {
   register char* stackpointer asm("esp"); //initialize stackpointer pointer with the value of the actual stackpointer
-  memcpy(stackpointer, src, n);
+  memcpy(dest, src, n);
   return stackpointer;
 };
