@@ -20,20 +20,20 @@ parse_args(int argc, char *argv[])
   char option;
   char *joined_argv;
 
-  joined_argv = join_string_array(argc, argv);
+  joined_argv = join_string_array(argc, argv); //joined_argv = charArray base address
   info("argc: %d argv: %s", argc, joined_argv);
-  free(joined_argv);
+  free(joined_argv); //deallocate memory allocated by charArray
 
-  program_state = Calloc(1, sizeof(state_t));
+  program_state = Calloc(1, sizeof(state_t)); //Allocate memory for 1 element of size(state_t)
   for (i = 0; optind < argc; ++i) {
     debug("%d opterr: %d", i, opterr);
     debug("%d optind: %d", i, optind);
     debug("%d optopt: %d", i, optopt);
     debug("%d argv[optind]: %s", i, argv[optind]);
-    if ((option = getopt(argc, argv, "+ei:")) != -1) {
+    if ((option = getopt(argc, argv, "+ei:")) != -1) { //get command line arguments
       switch (option) {
         case 'e': {
-          info("Encoding Argument: %s", optarg);
+          info("Encoding Argument: %s", optarg); //if e do this
           if ((program_state->encoding_to = determine_format(optarg)) == 0)
             goto errorcase;
         }
@@ -50,10 +50,10 @@ parse_args(int argc, char *argv[])
         }
       }
     }
-    elsif(argv[optind] != NULL)
+    elsif(argv[optind] != NULL) //if argv[optind] != null
     {
-      if (program_state->in_file == NULL) {
-        program_state->in_file = argv[optind];
+      if (program_state->in_file == NULL) { //(*program_state).in_file
+        program_state->in_file = argv[optind]; //(*program_state).in_file = argv[optind]
       }
       elsif(program_state->out_file == NULL)
       {
@@ -90,23 +90,23 @@ bom_to_string(format_t bom){
 char*
 join_string_array(int count, char *array[])
 {
-  char *ret;
-  char charArray[count];
+  char *ret; //char pointer ret
+  char charArray[count]; //char array of size count
   int i;
   int len = 0, str_len, cur_str_len;
 
-  str_len = array_size(count, array);
-  ret = &charArray;
+  str_len = array_size(count, array); //returns size of the array
+  ret = &charArray; //ret -> char array
 
   for (i = 0; i < count; ++i) {
     cur_str_len = strlen(array[i]);
-    memecpy(ret + len, array[i], cur_str_len);
+    memecpy(ret + len, array[i], cur_str_len); //copy string from array[i] to charArray[i]
     len += cur_str_len;
-    memecpy(ret + len, " ", 1);
+    memecpy(ret + len, " ", 1); //copy empty space into charArray[i]
     len += 1;
   }
 
-  return ret;
+  return ret; //return pointer to charArray
 }
 
 int

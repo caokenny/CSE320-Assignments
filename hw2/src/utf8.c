@@ -3,27 +3,25 @@
 #include "wrappers.h"
 #include <unistd.h>
 
-utf8_glyph_t someGlyph;
-
 int
-from_utf8_to_utf16le(int infile, int outfile)
+from_utf8_to_utf16le(int infile, int outfile) //translate from UTF8 to UTF16LE
 {
   int ret = 0;
   int bom;
-  utf8_glyph_t utf8_buf;
+  utf8_glyph_t utf8_buf; //create buffer of utf8_glyph_t data type
   ssize_t bytes_read;
   size_t remaining_bytes;
   size_t size_of_glyph;
   code_point_t code_point;
-  utf16_glyph_t utf16_buf;
+  utf16_glyph_t utf16_buf; //create utf16 buffer
 
-  bom = UTF16LE;
-  #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+  bom = UTF16LE; //this is the bom from check_bom()
+  #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ //reverse bom if it's in little endian
   reverse_bytes(&bom, 2);
   #endif
-  write_to_bigendian(outfile, &bom, 2);
+  write_to_bigendian(outfile, &bom, 2); //writes bom to outfile as big endian
 
-  while((bytes_read = read_to_bigendian(infile, &utf8_buf.bytes[0], 1)) > 0) {
+  while((bytes_read = read_to_bigendian(infile, &utf8_buf.bytes[0], 1)) > 0) { //read to infile as big endian store into utf8_buf
     if((remaining_bytes = remaining_utf8_bytes(utf8_buf.bytes[0]))) {
       if((bytes_read = read_to_bigendian(infile, &utf8_buf.bytes[1], remaining_bytes)) < 0) {
         break;
@@ -199,13 +197,13 @@ get_utf8_decoding_function(size_t size)
 {
   switch(size) {
   case 1:
-    return &utf8_one_byte_decode();
+    return &utf8_one_byte_decode;
   case 2:
-    return &utf8_two_byte_decode();
+    return &utf8_two_byte_decode;
   case 3:
-    return &utf8_three_byte_decode();
+    return &utf8_three_byte_decode;
   case 4:
-    return &utf8_four_byte_decode();
+    return &utf8_four_byte_decode;
   }
   return NULL;
 }

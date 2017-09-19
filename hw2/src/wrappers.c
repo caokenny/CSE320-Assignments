@@ -40,7 +40,7 @@ read_to_bigendian(int fd, void* buf, size_t count)
 {
   ssize_t bytes_read;
 
-  bytes_read = read(fd, buf, count);
+  bytes_read = read(fd, buf, count); //return bytes read from fd and store into buf
 /*#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   reverse_bytes(buf, count);
 #endif*/
@@ -83,6 +83,6 @@ void
 void
 *memecpy(void *dest, void const *src, size_t n) {
   register char* stackpointer asm("esp"); //initialize stackpointer pointer with the value of the actual stackpointer
-  memcpy(dest, src, n);
+  memcpy(dest, src, n); //copy string from src to dest
   return stackpointer;
 };
