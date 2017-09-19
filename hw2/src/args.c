@@ -124,7 +124,7 @@ array_size(int count, char *array[])
 void
 print_state()
 {
-errorcase:
+//errorcase:
   if (program_state == NULL) {
     error("program_state is %p", (void*)program_state);
     exit(EXIT_FAILURE);

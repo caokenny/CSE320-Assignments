@@ -11,8 +11,8 @@
 #define AS_GLYF(x) ((utf8_glyph_t*)x)
 
 const char *STR_UTF16BE  = "UTF16BE";
-char *const STR_UTF16LE = "UTF16LE";
-char const *STR_UTF8  = "UTF8";
+const char *STR_UTF16LE = "UTF16LE";
+const char *STR_UTF8  = "UTF8";
 
 typedef enum { UTF16LE = 0xFFFE, UTF16BE = 0xFEFF, UTF8 = 0xBFBBEF } format_t;
 
