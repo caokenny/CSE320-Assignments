@@ -40,7 +40,7 @@ int
 from_utf16be_to_utf8(int infile, int outfile)
 {
   /* TODO */
-  return -1;
+  return infile + outfile;
 }
 
 utf16_glyph_t

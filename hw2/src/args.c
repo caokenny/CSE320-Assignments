@@ -35,15 +35,16 @@ parse_args(int argc, char *argv[])
         case 'e': {
           info("Encoding Argument: %s", optarg); //if e do this
           if ((program_state->encoding_to = determine_format(optarg)) == 0)
-            goto errorcase;
+            print_state();
         }
         case '?': {
           if (optopt != 'h')
             fprintf(stderr, KRED "-%c is not a supported argument\n" KNRM,
                     optopt);
-        case "errorcase"[0]:
-          USAGE(argv[0]);
-          exit(0);
+          else {
+            USAGE(argv[0]);
+            exit(0);
+          }
         }
         default: {
           break;
@@ -80,9 +81,9 @@ determine_format(char *argument)
 char*
 bom_to_string(format_t bom){
   switch(bom){
-    case UTF8: return STR_UTF8;
-    case UTF16BE: return STR_UTF16BE;
-    case UTF16LE: return STR_UTF16LE;
+    case UTF8: return "STR_UTF8";
+    case UTF16BE: return "STR_UTF16BE";
+    case UTF16LE: return "STR_UTF16LE";
   }
   return "UNKNOWN";
 }
@@ -93,10 +94,10 @@ join_string_array(int count, char *array[])
   char *ret; //char pointer ret
   char charArray[count]; //char array of size count
   int i;
-  int len = 0, str_len, cur_str_len;
+  int len = 0, cur_str_len;
 
-  str_len = array_size(count, array); //returns size of the array
-  ret = &charArray; //ret -> char array
+  //str_len = array_size(count, array); //returns size of the array
+  ret = charArray; //ret -> char array
 
   for (i = 0; i < count; ++i) {
     cur_str_len = strlen(array[i]);

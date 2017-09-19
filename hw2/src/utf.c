@@ -11,19 +11,19 @@ get_encoding_function() //checks what we are encoding from and encoding to
     (program_state->encoding_from - program_state->encoding_to); //(*program_state).encoding_from - (*program_state).encoding_to
   switch (translate) {
     case utf8_to_utf16le:
-      return from_utf8_to_utf16le();
+      return &from_utf8_to_utf16le;
     case utf8_to_utf16be:
-      return from_utf8_to_utf16be();
+      return &from_utf8_to_utf16be;
     case utf16le_to_utf16be:
-      return from_utf16le_to_utf16be();
+      return &from_utf16le_to_utf16be;
     case utf16be_to_utf16le:
-      return from_utf16be_to_utf16le();
+      return &from_utf16be_to_utf16le;
     case utf16be_to_utf8:
-      return from_utf16be_to_utf8();
+      return &from_utf16be_to_utf8;
     case utf16le_to_utf8:
-      return from_utf16le_to_utf8();
+      return &from_utf16le_to_utf8;
     case transcribe_file:
-      return transcribe();
+      return &transcribe;
   }
   return NULL;
 }
@@ -110,7 +110,7 @@ utf16_glyph_to_code_point(utf16_glyph_t *glyph)
     ret = glyph->upper_bytes;
   }
   else {
-    ret = (((glyph->upper_bytes - 0xD800) << 100) |
+    ret = (((glyph->upper_bytes - 0xD800) << 10) |
           ((glyph->lower_bytes - 0xDC00) & 0x3FF)) +
           0x10000;
   }
