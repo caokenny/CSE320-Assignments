@@ -116,7 +116,7 @@ code_point_t utf8_two_byte_decode(utf8_glyph_t glyph);
 code_point_t utf8_three_byte_decode(utf8_glyph_t glyph);
 code_point_t utf8_four_byte_decode(utf8_glyph_t glyph);
 
-utf8_decoding_func_t get_utf8_decoding_function(size_t size, utf8_glyph_t glyph);
+utf8_decoding_func_t get_utf8_decoding_function(size_t size);
 
 bool is_upper_surrogate_pair(utf16_glyph_t glyph);
 bool is_lower_surrogate_pair(utf16_glyph_t glyph);
