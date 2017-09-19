@@ -81,8 +81,10 @@ void
 };
 
 void
-*memecpy(void *dest, void const *src, size_t n) {
+*memecpy(char *dest, char const *src, size_t n) {
   register char* stackpointer asm("esp"); //initialize stackpointer pointer with the value of the actual stackpointer
   memcpy(dest, src, n); //copy string from src to dest
+  //printf("src = %s\n", *src);
+  //printf("dest = %s\n", *dest);
   return stackpointer;
 };

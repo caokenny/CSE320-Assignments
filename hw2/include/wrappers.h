@@ -43,4 +43,4 @@ void* memeset(void* s, int c, size_t n);
 * @param c constant byte to fill the area with
 * @param n number of bytes to fill
 */
-void* memecpy(void* dest, const void* src, size_t n);
+void* memecpy(char* dest, const char* src, size_t n);

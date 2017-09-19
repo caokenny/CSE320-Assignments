@@ -96,11 +96,11 @@ char*
 join_string_array(int count, char *array[])
 {
   char *ret; //char pointer ret
-  char charArray[count]; //char array of size count
   int i;
-  int len = 0, cur_str_len;
+  int len = 0, str_len, cur_str_len;
 
-  //str_len = array_size(count, array); //returns size of the array
+  str_len = array_size(count, array); //returns size of the array
+  char charArray[str_len]; //char array of size count
   ret = charArray; //ret -> char array
 
   for (i = 0; i < count; ++i) {
@@ -122,7 +122,7 @@ array_size(int count, char *array[])
     sum += strlen(array[i]);
     ++sum; /* For the spaces */
   }
-  return sum+1;
+  return sum-1;
 }
 
 void
