@@ -26,7 +26,7 @@ parse_args(int argc, char *argv[])
 
   joined_argv = join_string_array(argc, argv); //joined_argv = charArray base address
   info("argc: %d argv: %s", argc, joined_argv);
-  free(joined_argv); //deallocate memory allocated by charArray
+  //free(joined_argv); //deallocate memory allocated by charArray
 
   program_state = Calloc(1, sizeof(state_t)); //Allocate memory for 1 element of size(state_t)
   for (i = 0; optind < argc; ++i) {
@@ -110,7 +110,6 @@ join_string_array(int count, char *array[])
     memecpy(ret + len, " ", 1); //copy empty space into charArray[i]
     len += 1;
   }
-
   return ret; //return pointer to charArray
 }
 
