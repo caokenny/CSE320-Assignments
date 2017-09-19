@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+const char *STR_UTF16BE  = "UTF16BE";
+const char *STR_UTF16LE = "UTF16LE";
+const char *STR_UTF8  = "UTF8";
+
 int opterr;
 int optopt;
 int optind;
