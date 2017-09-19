@@ -38,8 +38,9 @@ int
 from_utf16le_to_utf8(int infile, int outfile)
 {
   /* TODO */
-  return -1;
+  return infile + outfile;
 }
+
 
 utf16_glyph_t
 code_point_to_utf16le_glyph(code_point_t code_point, size_t *size_of_glyph)

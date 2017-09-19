@@ -3,6 +3,8 @@
 #include "wrappers.h"
 #include <unistd.h>
 
+utf8_glyph_t someGlyph;
+
 int
 from_utf8_to_utf16le(int infile, int outfile)
 {
@@ -27,7 +29,7 @@ from_utf8_to_utf16le(int infile, int outfile)
         break;
       }
     }
-    code_point = get_utf8_decoding_function(remaining_bytes + 1)(utf8_buf);
+    code_point = (uintptr_t)get_utf8_decoding_function((remaining_bytes + 1), utf8_buf);
     utf16_buf = code_point_to_utf16le_glyph(code_point, &size_of_glyph);
     write_to_bigendian(outfile, &utf16_buf, size_of_glyph);
   }
@@ -59,7 +61,7 @@ from_utf8_to_utf16be(int infile, int outfile)
         break;
       }
     }
-    code_point = get_utf8_decoding_function(remaining_bytes + 1)(utf8_buf);
+    code_point = (uintptr_t)get_utf8_decoding_function((remaining_bytes + 1), utf8_buf);
     utf16_buf = code_point_to_utf16be_glyph(code_point, &size_of_glyph);
     write_to_bigendian(outfile, &utf16_buf, size_of_glyph);
   }
@@ -193,17 +195,17 @@ remaining_utf8_bytes(utf8_byte_t first_byte)
 }
 
 utf8_decoding_func_t
-get_utf8_decoding_function(size_t size)
+get_utf8_decoding_function(size_t size, utf8_glyph_t glyph)
 {
   switch(size) {
   case 1:
-    return &utf8_one_byte_decode();
+    return utf8_one_byte_decode(glyph);
   case 2:
-    return &utf8_two_byte_decode();
+    return utf8_two_byte_decode(glyph);
   case 3:
-    return &utf8_three_byte_decode();
+    return utf8_three_byte_decode(glyph);
   case 4:
-    return &utf8_four_byte_decode();
+    return utf8_four_byte_decode(glyph);
   }
   return NULL;
 }
