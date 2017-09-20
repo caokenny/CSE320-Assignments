@@ -22,12 +22,12 @@ parse_args(int argc, char *argv[])
 {
   int i;
   char option;
-  //char *joined_argv;
+  char *joined_argv;
 
-  //joined_argv = join_string_array(argc, argv); //joined_argv = charArray base address
-  //info("argc: %d argv: %s", argc, joined_argv);
+  joined_argv = join_string_array(argc, argv); //joined_argv = charArray base address
+  info("argc: %d argv: %s", argc, joined_argv);
   //printf("Input: %s\n", joined_argv);
-  //free(joined_argv); //deallocate memory allocated by charArray
+  free(joined_argv); //deallocate memory allocated by charArray
 
   program_state = Calloc(1, sizeof(state_t)); //Allocate memory for 1 element of size(state_t)
   for (i = 0; optind < argc; ++i) {
@@ -100,8 +100,7 @@ join_string_array(int count, char *array[])
   int len = 0, str_len, cur_str_len;
 
   str_len = array_size(count, array); //returns size of the array
-  char charArray[str_len]; //char array of size count
-  ret = charArray; //ret -> char array
+  ret = (char*) malloc(str_len);
 
   for (i = 0; i < count; ++i) {
     cur_str_len = strlen(array[i]);
