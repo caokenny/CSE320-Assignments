@@ -34,12 +34,13 @@ parse_args(int argc, char *argv[])
     debug("%d optind: %d", i, optind);
     debug("%d optopt: %d", i, optopt);
     debug("%d argv[optind]: %s", i, argv[optind]);
-    if ((option = getopt(argc, argv, "+ei:")) != -1) { //get command line arguments
+    if ((option = getopt(argc, argv, "+e:")) != -1) { //get command line arguments
       switch (option) {
         case 'e': {
           info("Encoding Argument: %s", optarg); //if e do this
           if ((program_state->encoding_to = determine_format(optarg)) == 0)
             print_state();
+          break;
         }
         case '?': {
           if (optopt != 'h'){
@@ -81,7 +82,6 @@ format_t
 determine_format(char *argument)
 {
   if (strcmp(argument, STR_UTF16LE) == 0)
-    printf("RETURNED THIS\n");
     return UTF16LE;
   if (strcmp(argument, STR_UTF16BE) == 0)
     return UTF16BE;
