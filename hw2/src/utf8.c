@@ -126,7 +126,7 @@ utf8_two_byte_encode(code_point_t code_point)
   ret.bytes[1].byte |= buf;
 
   /* upper byte with '110x xxxx' */
-  code_point >>= 6;
+  code_point >>= 8; //shift by 8
   buf = 0xC0 | (code_point & 0x1F);
   ret.bytes[0].byte |= buf;
 
