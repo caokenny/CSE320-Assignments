@@ -36,7 +36,7 @@ from_utf8_to_utf16le(int infile, int outfile) //translate from UTF8 to UTF16LE
 }
 
 int
-from_utf8_to_utf16be(int infile, int outfile)
+from_utf8_to_utf16be(int infile, int outfile) //translate from utf8 to utf16BE
 {
   int ret = 0;
   int bom;
@@ -68,7 +68,7 @@ from_utf8_to_utf16be(int infile, int outfile)
 }
 
 utf8_glyph_t
-code_point_to_utf8_glyph(code_point_t code_point, size_t *size_of_glyph)
+code_point_to_utf8_glyph(code_point_t code_point, size_t *size_of_glyph) //codepoint to utf8
 {
   *size_of_glyph = utf8_glyph_size_of_code_point(code_point);
   return get_utf8_encoding_function(*size_of_glyph)(code_point);
@@ -106,7 +106,7 @@ get_utf8_encoding_function(size_t size)
 }
 
 utf8_glyph_t
-utf8_one_byte_encode(code_point_t code_point)
+utf8_one_byte_encode(code_point_t code_point) //codepoint to UTF8
 {
   utf8_glyph_t ret;
 
@@ -126,7 +126,7 @@ utf8_two_byte_encode(code_point_t code_point)
   ret.bytes[1].byte |= buf;
 
   /* upper byte with '110x xxxx' */
-  code_point >>= 8; //shift by 8
+  code_point >>= 6; //shift by 6
   buf = 0xC0 | (code_point & 0x1F);
   ret.bytes[0].byte |= buf;
 

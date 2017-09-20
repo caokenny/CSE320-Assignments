@@ -8,7 +8,7 @@ int
 main(int argc, char *argv[])
 {
   int infile, outfile, in_flags, out_flags;
-  code_point_t cp1 = 0xc3a9;
+  code_point_t cp1 = 0xE9;
   utf8_glyph_t g1;
   g1 = utf8_two_byte_encode(cp1);
   utf8_glyph_t compare;

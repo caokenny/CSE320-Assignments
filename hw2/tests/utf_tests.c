@@ -57,10 +57,10 @@ Test(utf8_suite, code_point_size) {
     cr_assert_eq(s3, 4);
 }
 
-Test(utf8_suite, encode_funcs) {
+Test(utf8_suite, encode_funcs) { //given a codepoint turn into UTF8
     utf8_glyph_t exp1, exp2, exp3, exp4;
     utf8_glyph_t g1, g2, g3, g4;
-    code_point_t cp1 = 0x21, cp2 = 0xc389, cp3 = 0xe79fa5, cp4 = 0xf09fa493;
+    code_point_t cp1 = 0x21, cp2 = 0xe9, cp3 = 0x77e5, cp4 = 0x1F913;
     g1 = utf8_one_byte_encode(cp1);
     g2 = utf8_two_byte_encode(cp2);
     g3 = utf8_three_byte_encode(cp3);
