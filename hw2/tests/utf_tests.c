@@ -109,7 +109,7 @@ Test(args_suite, join_string_array) {
     char *s = join_string_array(2, a);
 
     cr_assert_str_eq(s, "hello world ");
-    //free(s);
+    free(s);
 }
 
 Test(args_suite, determine_format) {

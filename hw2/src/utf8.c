@@ -159,10 +159,9 @@ utf8_four_byte_encode(code_point_t code_point)
   uint8_t buf;
   size_t i;
   const size_t cont_byte_bit_shamt = 6;
-  size_t le_offset;
 
   memeset(&ret, 0, sizeof ret);
-  for(i = 3, le_offset = 0; i > 0; i--, code_point >>= cont_byte_bit_shamt, le_offset++) {
+  for(i = 3; i > 0; i--, code_point >>= cont_byte_bit_shamt) {
     /* lower byte with '10xx xxxx' */
     buf = 0x80 | (code_point & 0x3F);
     ret.bytes[i].byte |= buf;
