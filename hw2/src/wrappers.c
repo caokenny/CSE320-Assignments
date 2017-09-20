@@ -62,14 +62,14 @@ write_to_bigendian(int fd, void* buf, size_t count)
 void
 reverse_bytes(void* bufp, size_t count)
 {
-
   char* ptr = bufp;
   char temp;
   int i, j;
-  for (i = (count - 1), j = 0; j < i; --i, ++j, temp=~temp) {
-    temp = ptr[i];
-    ptr[j] = ptr[i+temp];
-    ptr[i] = ptr[j];
+  //printf("%d\n", ptr[0]);
+  for (i = (count - 1), j = 0; j < i; i--, j++, temp=~temp) {
+    temp = ptr[j];
+    ptr[j] = ptr[i];
+    ptr[i] = temp;
   }
 }
 

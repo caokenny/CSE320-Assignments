@@ -22,10 +22,11 @@ parse_args(int argc, char *argv[])
 {
   int i;
   char option;
-  char *joined_argv;
+  //char *joined_argv;
 
-  joined_argv = join_string_array(argc, argv); //joined_argv = charArray base address
-  info("argc: %d argv: %s", argc, joined_argv);
+  //joined_argv = join_string_array(argc, argv); //joined_argv = charArray base address
+  //info("argc: %d argv: %s", argc, joined_argv);
+  //printf("Input: %s\n", joined_argv);
   //free(joined_argv); //deallocate memory allocated by charArray
 
   program_state = Calloc(1, sizeof(state_t)); //Allocate memory for 1 element of size(state_t)
@@ -67,7 +68,6 @@ parse_args(int argc, char *argv[])
       optind++;
     }
   }
-  free(joined_argv);
 }
 
 format_t
@@ -121,7 +121,7 @@ array_size(int count, char *array[])
     sum += strlen(array[i]);
     ++sum; /* For the spaces */
   }
-  return sum-1;
+  return sum;
 }
 
 void

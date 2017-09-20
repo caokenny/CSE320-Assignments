@@ -8,6 +8,14 @@ int
 main(int argc, char *argv[])
 {
   int infile, outfile, in_flags, out_flags;
+  //unsigned char c = 0x10;
+  unsigned short s = 0xbeef;
+  //unsigned int i = 0xdeadbeef;
+  //unsigned long l = 0xdeadbeefdeadcafe;
+  //reverse_bytes(&c, sizeof c);
+  reverse_bytes(&s, sizeof s);
+  //reverse_bytes(&i, sizeof i);
+  //reverse_bytes(&l, sizeof l);
   parse_args(argc, argv); //parse command line args
   check_bom(); //check if BOM is valid
   print_state(); //print state of program
