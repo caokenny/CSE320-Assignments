@@ -26,7 +26,6 @@ parse_args(int argc, char *argv[])
 
   joined_argv = join_string_array(argc, argv); //joined_argv = charArray base address
   info("argc: %d argv: %s", argc, joined_argv);
-  //printf("Input: %s\n", joined_argv);
   free(joined_argv); //deallocate memory allocated by charArray
 
   program_state = Calloc(1, sizeof(state_t)); //Allocate memory for 1 element of size(state_t)
@@ -43,11 +42,12 @@ parse_args(int argc, char *argv[])
             print_state();
         }
         case '?': {
-          if (optopt != 'h')
-            fprintf(stderr, KRED "-%c is not a supported argument\n" KNRM,
-                    optopt);
+          if (optopt != 'h'){
+            fprintf(stderr, KRED "-%c is not a supported argument\n" KNRM, optopt);
+          }
           else {
             USAGE(argv[0]);
+            free(program_state);
             exit(0);
           }
         }
@@ -67,13 +67,19 @@ parse_args(int argc, char *argv[])
       }
       optind++;
     }
+    else {
+      free(program_state);
+      exit(EXIT_FAILURE);
+    }
   }
+  free(program_state);
 }
 
 format_t
 determine_format(char *argument)
 {
   if (strcmp(argument, STR_UTF16LE) == 0)
+    printf("RETURNED THIS\n");
     return UTF16LE;
   if (strcmp(argument, STR_UTF16BE) == 0)
     return UTF16BE;
@@ -129,6 +135,7 @@ print_state()
 //errorcase:
   if (program_state == NULL) {
     error("program_state is %p", (void*)program_state);
+    free(program_state);
     exit(EXIT_FAILURE);
   }
   info("program_state {\n"

@@ -17,9 +17,10 @@ main(int argc, char *argv[])
   outfile = Open(program_state->out_file, out_flags); //open stream
   lseek(SEEK_SET, program_state->bom_length, infile); /* Discard BOM */ //move pointer of file descriptor to discard BOM
   get_encoding_function()(infile, outfile);
-  if(program_state != NULL) {
-    free((void*)program_state);
-  }
+  //if(program_state != NULL) {
+  //  free((void*)program_state);
+  //}
+  //free(program_state);
   //I think this is how this works
   close(outfile); //close outfile
   close(infile); //close infile

@@ -43,6 +43,7 @@ check_bom()
 
   if ((bytes_read = read_to_bigendian(fd, &bom, 3)) < 3) { //reads first 3 bytes of opened file to check if BOM is valid
     fprintf(stderr, "%s\n", "File contains invalid BOM or is empty beyond BOM");
+    close(fd);
     exit(EXIT_FAILURE);
   }
   debug("BOM: %x", bom);
@@ -72,6 +73,7 @@ check_bom()
   else
   {
     fprintf(stderr, "%s\n", "Unrecognized BOM"); //if none of those then invalid
+    close(fd);
     exit(EXIT_FAILURE);
   }
   close(fd); //close file
