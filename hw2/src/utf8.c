@@ -120,7 +120,7 @@ utf8_two_byte_encode(code_point_t code_point)
   utf8_glyph_t ret;
   uint8_t buf;
 
-  memeset(&ret, 0, sizeof ret);
+  memeset(&ret, 0, sizeof ret); //set ret to null
   /* continued byte with '10xx xxxx' */
   buf = 0x80 | (code_point & 0x3F);
   ret.bytes[1].byte |= buf;

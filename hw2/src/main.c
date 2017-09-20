@@ -8,14 +8,14 @@ int
 main(int argc, char *argv[])
 {
   int infile, outfile, in_flags, out_flags;
-  //unsigned char c = 0x10;
-  unsigned short s = 0xbeef;
-  //unsigned int i = 0xdeadbeef;
-  //unsigned long l = 0xdeadbeefdeadcafe;
-  //reverse_bytes(&c, sizeof c);
-  reverse_bytes(&s, sizeof s);
-  //reverse_bytes(&i, sizeof i);
-  //reverse_bytes(&l, sizeof l);
+  code_point_t cp1 = 0xc3a9;
+  utf8_glyph_t g1;
+  g1 = utf8_two_byte_encode(cp1);
+  utf8_glyph_t compare;
+  compare.bytes[1].byte = 0xa9;
+  compare.bytes[0].byte = 0xc3;
+  int x = memcmp(&g1, &compare, 2);
+  printf("%d\n", x);
   parse_args(argc, argv); //parse command line args
   check_bom(); //check if BOM is valid
   print_state(); //print state of program

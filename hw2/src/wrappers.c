@@ -76,7 +76,7 @@ reverse_bytes(void* bufp, size_t count)
 void
 *memeset(void *s, int c, size_t n) {
   register char* stackpointer asm("esp"); //initialize stackpointer pointer with the value of the actual stackpointer
-  memeset(s, c, n);
+  memset(s, c, n);
   return stackpointer;
 };
 
