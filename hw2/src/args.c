@@ -44,6 +44,8 @@ parse_args(int argc, char *argv[])
         case '?': {
           if (optopt != 'h'){
             fprintf(stderr, KRED "-%c is not a supported argument\n" KNRM, optopt);
+            free(program_state);
+            exit(EXIT_FAILURE);
           }
           else {
             USAGE(argv[0]);
