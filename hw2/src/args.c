@@ -38,8 +38,10 @@ parse_args(int argc, char *argv[])
       switch (option) {
         case 'e': {
           info("Encoding Argument: %s", optarg); //if e do this
-          if ((program_state->encoding_to = determine_format(optarg)) == 0)
+          if ((program_state->encoding_to = determine_format(optarg)) == 0){
+            free(program_state);
             print_state();
+          }
           break;
         }
         case '?': {
@@ -70,12 +72,11 @@ parse_args(int argc, char *argv[])
       }
       optind++;
     }
-    else {
-      free(program_state);
-      exit(EXIT_FAILURE);
-    }
   }
-  free(program_state);
+  if (program_state->in_file == NULL || program_state->out_file == NULL || argc == 1) {
+    free(program_state);
+    exit(EXIT_FAILURE);
+  }
 }
 
 format_t
@@ -137,7 +138,6 @@ print_state()
 //errorcase:
   if (program_state == NULL) {
     error("program_state is %p", (void*)program_state);
-    free(program_state);
     exit(EXIT_FAILURE);
   }
   info("program_state {\n"
