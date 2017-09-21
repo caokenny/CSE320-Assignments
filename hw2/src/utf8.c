@@ -19,7 +19,7 @@ from_utf8_to_utf16le(int infile, int outfile) //translate from UTF8 to UTF16LE
   #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ //reverse bom if it's in little endian
   reverse_bytes(&bom, 2);
   #endif
-  write_to_bigendian(outfile, &bom, 2); //writes bom to outfile as big endian
+  //write_to_bigendian(outfile, &bom, 2); //writes bom to outfile as big endian
 
   while((bytes_read = read_to_bigendian(infile, &utf8_buf.bytes[0], 1)) > 0) { //read to infile as big endian store into utf8_buf
     if((remaining_bytes = remaining_utf8_bytes(utf8_buf.bytes[0]))) {
@@ -51,7 +51,7 @@ from_utf8_to_utf16be(int infile, int outfile) //translate from utf8 to utf16BE
   #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   reverse_bytes(&bom, 2);
   #endif
-  write_to_bigendian(outfile, &bom, 2);
+  //write_to_bigendian(outfile, &bom, 2);
 
   while((bytes_read = read_to_bigendian(infile, &utf8_buf.bytes[0], 1)) > 0) {
     if((remaining_bytes = remaining_utf8_bytes(utf8_buf.bytes[0]))) {
