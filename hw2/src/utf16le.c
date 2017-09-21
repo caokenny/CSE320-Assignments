@@ -11,6 +11,8 @@ from_utf16le_to_utf16be(int infile, int outfile)
   ssize_t bytes_read;
   size_t bytes_to_write;
   int ret = 0;
+  buf.lower_bytes = 0;
+  buf.upper_bytes = 0;
 
   bom = UTF16BE;
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__

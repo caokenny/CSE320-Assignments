@@ -12,7 +12,7 @@ main(int argc, char *argv[])
   check_bom(); //check if BOM is valid also sets program_state->encoding_from
   print_state(); //print state of program
   in_flags = O_RDONLY;
-  out_flags = O_WRONLY | O_CREAT;
+  out_flags = O_WRONLY | O_TRUNC | O_CREAT;
   infile = Open(program_state->in_file, in_flags); //open stream
   outfile = Open(program_state->out_file, out_flags); //open stream
   lseek(SEEK_SET, program_state->bom_length, infile); /* Discard BOM */ //move pointer of file descriptor to discard BOM
