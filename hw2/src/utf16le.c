@@ -16,7 +16,6 @@ from_utf16le_to_utf16be(int infile, int outfile)
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   reverse_bytes(&bom, 2);
 #endif
-  write_to_bigendian(outfile, &bom, 2);
 
   while ((bytes_read = read_to_bigendian(infile, &(buf.upper_bytes), 2)) > 0) {
     bytes_to_write = 2;
