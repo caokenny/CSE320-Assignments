@@ -15,7 +15,8 @@ main(int argc, char *argv[])
   out_flags = O_WRONLY | O_TRUNC | O_CREAT;
   infile = Open(program_state->in_file, in_flags); //open stream
   outfile = Open(program_state->out_file, out_flags); //open stream
-  lseek(SEEK_SET, program_state->bom_length, infile); /* Discard BOM */ //move pointer of file descriptor to discard BOM
+  //lseek(infile, program_state->bom_length, SEEK_SET);
+  //lseek(SEEK_SET, program_state->bom_length, infile); /* Discard BOM */ //move pointer of file descriptor to discard BOM
   get_encoding_function()(infile, outfile);
   if(program_state != NULL) {
     free(program_state);

@@ -87,7 +87,6 @@ determine_format(char *argument)
   if (strcmp(argument, STR_UTF16BE) == 0)
     return UTF16BE;
   if (strcmp(argument, STR_UTF8) == 0)
-    printf("UTF8 Format\n");
     return UTF8;
   return 0;
 }
