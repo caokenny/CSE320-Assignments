@@ -75,6 +75,10 @@ parse_args(int argc, char *argv[])
     }
     elsif(argv[optind] != NULL) //if argv[optind] != null
     {
+      if (optind < 3) {
+        free(program_state);
+        exit(EXIT_FAILURE);
+      }
       if (program_state->in_file == NULL) { //(*program_state).in_file
         program_state->in_file = argv[optind]; //(*program_state).in_file = argv[optind]
       }
@@ -85,7 +89,7 @@ parse_args(int argc, char *argv[])
       optind++;
     }
   }
-  if (program_state->in_file == NULL || program_state->out_file == NULL || wrongFormat == 1 || argc == 1) {
+  if (program_state->in_file == NULL || program_state->out_file == NULL || wrongFormat == 1 || argc == 1 || argc != 5) {
     if(program_state != NULL) {
         free(program_state);
     }
