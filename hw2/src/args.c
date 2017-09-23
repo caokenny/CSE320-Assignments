@@ -21,6 +21,7 @@ void
 parse_args(int argc, char *argv[])
 {
   int i;
+  int wrongFormat = 0;
   char option;
   char *joined_argv;
 
@@ -46,7 +47,7 @@ parse_args(int argc, char *argv[])
             exit(EXIT_SUCCESS);
           }
           if ((program_state->encoding_to = determine_format(optarg)) == 0){
-            free(program_state);
+            wrongFormat = 1;
             print_state();
           }
           break;
@@ -84,7 +85,7 @@ parse_args(int argc, char *argv[])
       optind++;
     }
   }
-  if (program_state->in_file == NULL || program_state->out_file == NULL || argc == 1) {
+  if (program_state->in_file == NULL || program_state->out_file == NULL || wrongFormat == 1 || argc == 1) {
     if(program_state != NULL) {
         free(program_state);
     }
