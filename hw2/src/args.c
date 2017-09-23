@@ -38,6 +38,13 @@ parse_args(int argc, char *argv[])
       switch (option) {
         case 'e': {
           info("Encoding Argument: %s", optarg); //if e do this
+          if (optarg[1] == 104) {
+            USAGE(argv[0]);
+            if (program_state != NULL) {
+                free(program_state);
+            }
+            exit(EXIT_SUCCESS);
+          }
           if ((program_state->encoding_to = determine_format(optarg)) == 0){
             free(program_state);
             print_state();
@@ -47,13 +54,17 @@ parse_args(int argc, char *argv[])
         case '?': {
           if (optopt != 'h'){
             fprintf(stderr, KRED "-%c is not a supported argument\n" KNRM, optopt);
-            free(program_state);
+            if(program_state != NULL) {
+                free(program_state);
+            }
             exit(EXIT_FAILURE);
           }
           else {
             USAGE(argv[0]);
-            free(program_state);
-            exit(0);
+            if(program_state != NULL) {
+                free(program_state);
+            }
+            exit(EXIT_SUCCESS);
           }
         }
         default: {
@@ -74,7 +85,9 @@ parse_args(int argc, char *argv[])
     }
   }
   if (program_state->in_file == NULL || program_state->out_file == NULL || argc == 1) {
-    free(program_state);
+    if(program_state != NULL) {
+        free(program_state);
+    }
     exit(EXIT_FAILURE);
   }
 }
