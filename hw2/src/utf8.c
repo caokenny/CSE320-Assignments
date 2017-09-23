@@ -68,7 +68,7 @@ from_utf8_to_utf16be(int infile, int outfile) //translate from utf8 to utf16BE
 }
 
 utf8_glyph_t
-code_point_to_utf8_glyph(code_point_t code_point, size_t *size_of_glyph) //codepoint to utf8
+code_point_to_utf8_glyph(code_point_t code_point, size_t *size_of_glyph) //MAYBE PROBLEM HERE
 {
   *size_of_glyph = utf8_glyph_size_of_code_point(code_point);
   return get_utf8_encoding_function(*size_of_glyph)(code_point);

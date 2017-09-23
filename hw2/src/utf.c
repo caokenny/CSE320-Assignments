@@ -105,14 +105,14 @@ is_lower_surrogate_pair(utf16_glyph_t glyph)
 }
 
 code_point_t
-utf16_glyph_to_code_point(utf16_glyph_t *glyph)
+utf16_glyph_to_code_point(utf16_glyph_t *glyph) //MAYBE SOMETHING WRONG IN HERE
 {
   code_point_t ret = 0;
   if(!is_upper_surrogate_pair(*glyph)) {
     ret = glyph->upper_bytes;
   }
   else {
-    ret = (((glyph->upper_bytes - 0xD800) << 10) |
+    ret = ((((glyph->upper_bytes) - 0xD800) << 10) |
           ((glyph->lower_bytes - 0xDC00) & 0x3FF)) +
           0x10000;
   }
