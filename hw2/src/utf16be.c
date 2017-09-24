@@ -61,8 +61,6 @@ from_utf16be_to_utf8(int infile, int outfile)
 
   while ((bytes_read = read_to_bigendian(infile, &(buf.upper_bytes), 2)) > 0) {
     //bytes_to_write = 2; /* utf-32 future compatibility */
-    if (buf.upper_bytes == previousBuf.upper_bytes)
-      buf.upper_bytes = 0;
     if (buf.lower_bytes == previousBuf.lower_bytes)
       buf.lower_bytes = 0;
     reverse_bytes(&(buf.upper_bytes), 2);
