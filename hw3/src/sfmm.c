@@ -31,8 +31,8 @@ void *sf_malloc(size_t size) {
     }
     int padding = 0;
     if (size <= LIST_1_MAX){ //if size is less than list 1 max check first list for free block
-        if (seg_free_list[0].head == NULL){
-            sf_header *heapPointer = sf_sbrk();
+        if (seg_free_list[0].head == NULL && seg_free_list[1].head == NULL && seg_free_list[2].head == NULL && seg_free_list[3].head == NULL){
+            sf_header *headPointer = sf_sbrk();
             sf_header header;
             header.allocated = 1;
             if ((size % 8) != 0){
@@ -47,17 +47,33 @@ void *sf_malloc(size_t size) {
                 header.padded = 1;
             }
             sf_footer footer;
-            sf_footer *footerPointer = get_heap_start();
+            sf_footer *footerPointer = (sf_footer*)headPointer;
             footer.allocated = header.allocated;
             footer.padded = header.padded;
             footer.two_zeroes = 0;
             footer.block_size = header.block_size;
             footer.requested_size = size;
-            *heapPointer = header;
-            footerPointer += footer.block_size - 8;
+            *headPointer = header;
+            footerPointer += ((header.block_size<<4) - 8)/8;
             *footerPointer = footer;
-            sf_blockprint(get_heap_start());
-            return get_heap_start() + 8;
+            int remainingUnusedBytes = PAGE_SZ - header.block_size;
+            sf_free_header freeHeader;
+            freeHeader.header.allocated = 0;
+            freeHeader.header.padded = 0;
+            freeHeader.header.unused = 0;
+            freeHeader.header.two_zeroes = 0;
+            freeHeader.header.block_size = (remainingUnusedBytes>>4);
+            freeHeader.next = NULL;
+            freeHeader.prev = NULL;
+            footerPointer += 1;
+            sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
+            freeHeaderPtr += 1;
+            *freeHeaderPtr = freeHeader;
+            if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
+            else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
+            else if (remainingUnusedBytes > LIST_2_MAX && remainingUnusedBytes < LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
+            else seg_free_list[3].head = freeHeaderPtr;
+            return headPointer + 1;
         }
     }
     //else if(size <= LIST_2_MAX){//if size is less than list 2 max check second list for free block
