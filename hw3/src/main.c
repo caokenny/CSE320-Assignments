@@ -5,13 +5,13 @@ int main(int argc, char const *argv[]) {
 
     sf_mem_init();
 
-    double* ptr = sf_malloc(sizeof(long double));
+    double* ptr = sf_malloc(64);
 
     sf_varprint(ptr);
 
     *ptr = 320320320e-320;
 
-    printf("%f\n", *ptr);
+    //printf("%f\n", *ptr);
 
     sf_free(ptr);
 

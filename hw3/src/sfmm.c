@@ -25,8 +25,12 @@ free_list seg_free_list[4] = {
 int sf_errno = 0;
 
 void *sf_malloc(size_t size) {
-    if (size <= 0 || size > 16384){ //if invalid size set sf_errno to EINVAL and return NULL
+    if (size <= 0 || size > (PAGE_SZ*4)){ //if invalid size set sf_errno to EINVAL and return NULL
         sf_errno = EINVAL;
+        return NULL;
+    }
+    if ((size + 16) > (PAGE_SZ*4)){
+        sf_errno = ENOMEM;
         return NULL;
     }
     int padding = 0;
@@ -34,6 +38,7 @@ void *sf_malloc(size_t size) {
         if (seg_free_list[0].head == NULL && seg_free_list[1].head == NULL && seg_free_list[2].head == NULL && seg_free_list[3].head == NULL){
             sf_header *headPointer = sf_sbrk();
             sf_header header;
+
             header.allocated = 1;
             if ((size % 8) != 0){
                 padding = 8 - (size%8);
@@ -46,6 +51,7 @@ void *sf_malloc(size_t size) {
                 header.block_size = LIST_1_MIN;
                 header.padded = 1;
             }
+
             sf_footer footer;
             sf_footer *footerPointer = (sf_footer*)headPointer;
             footer.allocated = header.allocated;
@@ -57,6 +63,7 @@ void *sf_malloc(size_t size) {
             footerPointer += ((header.block_size<<4) - 8)/8;
             *footerPointer = footer;
             int remainingUnusedBytes = PAGE_SZ - header.block_size;
+
             sf_free_header freeHeader;
             freeHeader.header.allocated = 0;
             freeHeader.header.padded = 0;
@@ -65,10 +72,12 @@ void *sf_malloc(size_t size) {
             freeHeader.header.block_size = (remainingUnusedBytes>>4);
             freeHeader.next = NULL;
             freeHeader.prev = NULL;
+
             footerPointer += 1;
             sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
             freeHeaderPtr += 1;
             *freeHeaderPtr = freeHeader;
+
             if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
             else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
             else if (remainingUnusedBytes > LIST_2_MAX && remainingUnusedBytes < LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
@@ -94,5 +103,11 @@ void *sf_realloc(void *ptr, size_t size) {
 }
 
 void sf_free(void *ptr) {
+    if (ptr == NULL) {
+        abort();
+    }
+    if ((ptr - 8) < get_heap_start() || ptr > get_heap_end()) {
+        abort();
+    }
 	return;
 }
