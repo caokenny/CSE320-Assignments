@@ -42,8 +42,8 @@ void *sf_malloc(size_t size) {
         int checkThisFirst = 0;
         //Check to see which list we should be checking first according to the size given
         if (size < LIST_1_MAX) checkThisFirst = 0;
-        else if (size > LIST_1_MAX && size < LIST_2_MIN) checkThisFirst = 1;
-        else if (size > LIST_2_MAX && size < LIST_3_MIN) checkThisFirst = 2;
+        else if (size > LIST_1_MAX && size < LIST_2_MAX) checkThisFirst = 1;
+        else if (size > LIST_2_MAX && size < LIST_3_MAX) checkThisFirst = 2;
         else checkThisFirst = 3;
         //freeHeader points to the head of seg_free_list[checkThisFirst]
         sf_free_header *freeHeader;
@@ -91,6 +91,9 @@ void *sf_malloc(size_t size) {
                     //freeHeaderPtr += 1;
                     *freeHeaderPtr = newFreeHeader;
 
+                    if (seg_free_list[i].head->next == NULL && seg_free_list[i].head->prev == NULL)
+                        seg_free_list[i].head = NULL;
+
                     if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
                     else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
                     else if (remainingUnusedBytes > LIST_2_MAX && remainingUnusedBytes < LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
@@ -121,7 +124,7 @@ void sf_free(void *ptr) {
     if (newHeader < (sf_header*)get_heap_start() || (newFooter + 1) > (sf_footer*)get_heap_end()) abort();
     //if header or footer allocated bit is 0 abort
     if (newHeader->allocated == 0 || newFooter->allocated == 0) abort();
-    if (newFooter->requested_size + 16 != newFooter->block_size){
+    if (newFooter->requested_size + 16 != newFooter->block_size << 4){
         if (newFooter->padded != 1 && newHeader->padded != 1) abort();
     }
     //if header and footer padded/allocated bits are inconsistent abort
@@ -142,21 +145,28 @@ void sf_free(void *ptr) {
     sf_free_header *freeHeader = (sf_free_header*)newHeader;
 
     if (seg_free_list[placeIntoThisList].head == NULL) seg_free_list[placeIntoThisList].head = freeHeader;
+    else{
+        sf_free_header *freeHeaderHolder = seg_free_list[placeIntoThisList].head;
+        seg_free_list[placeIntoThisList].head = freeHeader;
+        freeHeader->next = freeHeaderHolder;
+        freeHeader->prev = NULL;
+        freeHeaderHolder->prev = freeHeader;
+    }
 	return;
 }
 
 void coalescBlocks(sf_header *newHeader, sf_footer *newFooter){
     size_t newBlockSize = (newFooter + 1)->block_size << 4; //Go into header of next block, grab block_size
-    newBlockSize += newHeader->block_size; //add next header block size to current block size
+    size_t oldFreeBlockSize = (newFooter +1)->block_size << 4;
+    newBlockSize += newHeader->block_size<<4; //add next header block size to current block size
     newHeader->block_size = newBlockSize >> 4;
     newFooter = (sf_footer*)newHeader;
     newFooter += ((newHeader->block_size<<4) - 8)/8;
-    newFooter->block_size = newBlockSize >> 4;
+    newFooter->block_size = newHeader->block_size;
     int removeFromThisList = 0;
-    size_t coalescBlockSize = newHeader->block_size << 4;
-    if (coalescBlockSize < LIST_1_MAX) removeFromThisList = 0;
-    else if (coalescBlockSize > LIST_1_MAX && coalescBlockSize < LIST_2_MAX) removeFromThisList = 1;
-    else if (coalescBlockSize > LIST_2_MAX && coalescBlockSize < LIST_3_MAX) removeFromThisList = 2;
+    if (oldFreeBlockSize < LIST_1_MAX) removeFromThisList = 0;
+    else if (oldFreeBlockSize > LIST_1_MAX && oldFreeBlockSize < LIST_2_MAX) removeFromThisList = 1;
+    else if (oldFreeBlockSize > LIST_2_MAX && oldFreeBlockSize < LIST_3_MAX) removeFromThisList = 2;
     else removeFromThisList = 3;
 
     if (seg_free_list[removeFromThisList].head->next == NULL) seg_free_list[removeFromThisList].head = NULL;

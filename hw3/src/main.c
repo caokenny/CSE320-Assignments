@@ -5,7 +5,7 @@ int main(int argc, char const *argv[]) {
 
     sf_mem_init();
 
-    double* ptr = sf_malloc(88);
+    /*double* ptr = sf_malloc(88);
 
     sf_varprint(ptr);
 
@@ -13,17 +13,7 @@ int main(int argc, char const *argv[]) {
 
     //printf("%f\n", *ptr);
 
-    sf_free(ptr);
-/*
-    void *x = sf_malloc(sizeof(double) * 11);
-    void *y = sf_malloc(sizeof(char));
-
-    sf_varprint(x);
-
-    sf_varprint(y);
-
-    sf_free(x);
-    sf_free(y);*/
+    sf_free(ptr); */
 
     sf_mem_fini();
 
