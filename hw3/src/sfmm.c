@@ -107,7 +107,6 @@ void *sf_malloc(size_t size) {
                     else {
                         sf_free_header *pointToAList = seg_free_list[i].head->next;
                         while (pointToAList != NULL){
-                            printf("%d\n", pointToAList->header.block_size << 4);
                             if ((pointToAList->header.block_size << 4) == header.block_size << 4){
                                 pointToAList->prev->next = pointToAList->next;
                                 break;
@@ -125,17 +124,11 @@ void *sf_malloc(size_t size) {
                     else placeIntoThisList = 3;
 
                     if (seg_free_list[placeIntoThisList].head != NULL) {
-                        sf_free_header *pointToAList = seg_free_list[placeIntoThisList].head;
-                        while (pointToAList != NULL){
-                            if (pointToAList->next == NULL){
-                                pointToAList->next = freeHeaderPtr;
-                                freeHeaderPtr->prev = pointToAList;
-                                freeHeaderPtr->next = NULL;
-                                break;
-                            } else {
-                                pointToAList = pointToAList->next;
-                            }
-                        }
+                        //sf_free_header *pointToAList = seg_free_list[placeIntoThisList].head;
+                        seg_free_list[placeIntoThisList].head->prev = freeHeaderPtr;
+                        freeHeaderPtr->next = seg_free_list[placeIntoThisList].head;
+                        seg_free_list[placeIntoThisList].head = freeHeaderPtr;
+                        freeHeaderPtr->prev = NULL;
                     } else {
                         seg_free_list[placeIntoThisList].head = freeHeaderPtr;
                     }
