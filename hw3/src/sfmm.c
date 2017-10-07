@@ -104,13 +104,46 @@ void *sf_malloc(size_t size) {
 
                     if (seg_free_list[i].head->next == NULL && seg_free_list[i].head->prev == NULL)
                         seg_free_list[i].head = NULL;
+                    else {
+                        sf_free_header *pointToAList = seg_free_list[i].head->next;
+                        while (pointToAList != NULL){
+                            printf("%d\n", pointToAList->header.block_size << 4);
+                            if ((pointToAList->header.block_size << 4) == header.block_size << 4){
+                                pointToAList->prev->next = pointToAList->next;
+                                break;
+                            } else {
+                                pointToAList = pointToAList->next;
+                            }
+                        }
+                    }
 
-                    printf("Remaining Unused Bytes = %d\n", remainingUnusedBytes);
+                    int placeIntoThisList = 0;
 
-                    if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
+                    if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) placeIntoThisList = 0;
+                    else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) placeIntoThisList = 1;
+                    else if (remainingUnusedBytes > LIST_2_MAX && remainingUnusedBytes < LIST_3_MAX) placeIntoThisList = 2;
+                    else placeIntoThisList = 3;
+
+                    if (seg_free_list[placeIntoThisList].head != NULL) {
+                        sf_free_header *pointToAList = seg_free_list[placeIntoThisList].head;
+                        while (pointToAList != NULL){
+                            if (pointToAList->next == NULL){
+                                pointToAList->next = freeHeaderPtr;
+                                freeHeaderPtr->prev = pointToAList;
+                                freeHeaderPtr->next = NULL;
+                                break;
+                            } else {
+                                pointToAList = pointToAList->next;
+                            }
+                        }
+                    } else {
+                        seg_free_list[placeIntoThisList].head = freeHeaderPtr;
+                    }
+
+                    /*if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
                     else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
                     else if (remainingUnusedBytes > LIST_2_MAX && remainingUnusedBytes < LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
-                    else seg_free_list[3].head = freeHeaderPtr;
+                    else seg_free_list[3].head = freeHeaderPtr;*/
                     return (sf_header*)freeHeader + 1;
                 }
                 else {
@@ -303,8 +336,6 @@ void *firstAllocation(size_t size){
     freeFooter.two_zeroes = 0;
     freeFooter.block_size = freeHeader.header.block_size;
     *freeFooterPointer = freeFooter;
-
-    printf("Remaining Unused Bytes = %d\n", remainingUnusedBytes);
 
     if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
     else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
