@@ -10,6 +10,7 @@
 #define EINVAL 22
 #define ENOMEM 12
 void *firstAllocation(size_t size);
+void coalescBlocks(sf_header *newHeader, sf_footer *newFooter);
 
 /**
  * You should store the heads of your free lists in these variables.
@@ -118,14 +119,21 @@ void sf_free(void *ptr) {
     newFooter += ((newHeader->block_size<<4) - 8)/8;
     printf("%d\n", (newHeader->block_size));
     if (newHeader == NULL) abort();
-    if (newHeader < get_heap_start() || (newFooter + 1) > get_heap_end()) abort();
+    if (newHeader < (sf_header*)get_heap_start() || (newFooter + 1) > (sf_footer*)get_heap_end()) abort();
     if (newHeader->allocated == 0 || newFooter->allocated == 0) abort();
     if (newFooter->requested_size + 16 != newFooter->block_size){
         if (newFooter->padded != 1) abort();
     }
-    if (newHeader->allocated != newFooter->allocated ||
-        newHeader->padded != newFooter->padded) abort();
+    if (newHeader->allocated != newFooter->allocated || newHeader->padded != newFooter->padded)
+        abort();
+    newHeader->allocated = 0;
+    newFooter->allocated = 0;
+    if ((newFooter + 1)->allocated == 0) coalescBlocks(newHeader, newFooter);
 	return;
+}
+
+void coalescBlocks(sf_header *newHeader, sf_footer *newFooter){
+    return;
 }
 
 void *firstAllocation(size_t size){
