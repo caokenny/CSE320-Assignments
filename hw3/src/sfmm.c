@@ -116,8 +116,8 @@ void sf_free(void *ptr) {
     sf_header *newHeader = ptr;
     sf_footer *newFooter = ptr;
     newHeader -= 1;
+    newFooter -= 1;
     newFooter += ((newHeader->block_size<<4) - 8)/8;
-    printf("%d\n", (newHeader->block_size));
     if (newHeader == NULL) abort();
     if (newHeader < (sf_header*)get_heap_start() || (newFooter + 1) > (sf_footer*)get_heap_end()) abort();
     if (newHeader->allocated == 0 || newFooter->allocated == 0) abort();
@@ -128,11 +128,38 @@ void sf_free(void *ptr) {
         abort();
     newHeader->allocated = 0;
     newFooter->allocated = 0;
-    if ((newFooter + 1)->allocated == 0) coalescBlocks(newHeader, newFooter);
+    size_t freeBlockSize = 0;
+    if ((newFooter + 1)->allocated == 0){
+        coalescBlocks(newHeader, newFooter);
+        freeBlockSize = newHeader->block_size << 4;
+    }else freeBlockSize = newHeader->block_size;
+    int placeIntoThisList = 0;
+    if (freeBlockSize < LIST_1_MAX) placeIntoThisList = 0;
+    else if (freeBlockSize > LIST_1_MAX && freeBlockSize < LIST_2_MAX) placeIntoThisList = 1;
+    else if (freeBlockSize > LIST_2_MAX && freeBlockSize < LIST_3_MAX) placeIntoThisList = 2;
+    else placeIntoThisList = 3;
+
+    sf_free_header *freeHeader = (sf_free_header*)newHeader;
+
+    if (seg_free_list[placeIntoThisList].head == NULL) seg_free_list[placeIntoThisList].head = freeHeader;
 	return;
 }
 
 void coalescBlocks(sf_header *newHeader, sf_footer *newFooter){
+    size_t newBlockSize = (newFooter + 1)->block_size << 4; //Go into header of next block, grab block_size
+    newBlockSize += newHeader->block_size; //add next header block size to current block size
+    newHeader->block_size = newBlockSize >> 4;
+    newFooter = (sf_footer*)newHeader;
+    newFooter += ((newHeader->block_size<<4) - 8)/8;
+    newFooter->block_size = newBlockSize >> 4;
+    int removeFromThisList = 0;
+    size_t coalescBlockSize = newHeader->block_size << 4;
+    if (coalescBlockSize < LIST_1_MAX) removeFromThisList = 0;
+    else if (coalescBlockSize > LIST_1_MAX && coalescBlockSize < LIST_2_MAX) removeFromThisList = 1;
+    else if (coalescBlockSize > LIST_2_MAX && coalescBlockSize < LIST_3_MAX) removeFromThisList = 2;
+    else removeFromThisList = 3;
+
+    if (seg_free_list[removeFromThisList].head->next == NULL) seg_free_list[removeFromThisList].head = NULL;
     return;
 }
 
