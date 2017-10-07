@@ -31,7 +31,7 @@ Test(sf_memsuite_student, Malloc_an_Integer_check_freelist, .init = sf_mem_init,
 
 	cr_assert_not_null(fl->head, "No block in expected free list!");
 	cr_assert_null(fl->head->next, "Found more blocks than expected!");
-	printf("%d\n", fl->head->header.block_size);
+	//printf("%d\n", fl->head->header.block_size);
 	cr_assert(fl->head->header.block_size << 4 == 4064);
 	cr_assert(fl->head->header.allocated == 0);
 	cr_assert(sf_errno == 0, "sf_errno is not zero!");

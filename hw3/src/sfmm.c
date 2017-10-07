@@ -40,15 +40,16 @@ void *sf_malloc(size_t size) {
     else {
         int checkThisFirst = 0;
         //Check to see which list we should be checking first according to the size given
-        if (size > LIST_1_MIN && size < LIST_1_MAX) checkThisFirst = 0;
+        if (size < LIST_1_MAX) checkThisFirst = 0;
         else if (size > LIST_1_MAX && size < LIST_2_MIN) checkThisFirst = 1;
         else if (size > LIST_2_MAX && size < LIST_3_MIN) checkThisFirst = 2;
         else checkThisFirst = 3;
         //freeHeader points to the head of seg_free_list[checkThisFirst]
-        sf_free_header *freeHeader = seg_free_list[checkThisFirst].head;
+        sf_free_header *freeHeader;
         sf_header header;
         int padding = 0;
         for (int i = checkThisFirst; i < 4; i++){
+            freeHeader = seg_free_list[i].head;
             while (freeHeader != NULL){
                 if ((freeHeader->header.block_size << 4) >= (size + 16)){ //If the header we're checking has enough space, allocate it
                     //allocate memory
@@ -111,8 +112,8 @@ void *sf_realloc(void *ptr, size_t size) {
 }
 
 void sf_free(void *ptr) {
-    sf_header *newHeader = ptr;
-    printf("%d\n", (newHeader->allocated));
+    //sf_header *newHeader = ptr;
+    //printf("%d\n", (newHeader->allocated));
     /*if (ptr == NULL) {
         abort();
     }
