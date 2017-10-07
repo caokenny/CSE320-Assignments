@@ -92,8 +92,20 @@ void *sf_malloc(size_t size) {
                     //freeHeaderPtr += 1;
                     *freeHeaderPtr = newFreeHeader;
 
+                    sf_footer freeFooter;
+                    sf_footer *freeFooterPointer = (sf_footer*)freeHeaderPtr;
+                    freeFooterPointer += ((newFreeHeader.header.block_size << 4) - 8)/8;
+                    freeFooter.allocated = newFreeHeader.header.allocated;
+                    freeFooter.padded = newFreeHeader.header.padded;
+                    freeFooter.requested_size = 0;
+                    freeFooter.two_zeroes = 0;
+                    freeFooter.block_size = newFreeHeader.header.block_size;
+                    *freeFooterPointer = freeFooter;
+
                     if (seg_free_list[i].head->next == NULL && seg_free_list[i].head->prev == NULL)
                         seg_free_list[i].head = NULL;
+
+                    printf("Remaining Unused Bytes = %d\n", remainingUnusedBytes);
 
                     if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
                     else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
@@ -203,6 +215,10 @@ void sf_free(void *ptr) {
 
     sf_free_header *freeHeader = (sf_free_header*)newHeader;
 
+    /*sf_free_header *freeHeader;
+    freeHeader->header = *newHeader;
+    *newHeader = freeHeader;*/
+
     if (seg_free_list[placeIntoThisList].head == NULL) seg_free_list[placeIntoThisList].head = freeHeader;
     else{
         sf_free_header *freeHeaderHolder = seg_free_list[placeIntoThisList].head;
@@ -277,6 +293,18 @@ void *firstAllocation(size_t size){
     sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
     //freeHeaderPtr += 1;
     *freeHeaderPtr = freeHeader;
+
+    sf_footer freeFooter;
+    sf_footer *freeFooterPointer = (sf_footer*)freeHeaderPtr;
+    freeFooterPointer += ((freeHeader.header.block_size << 4) - 8)/8;
+    freeFooter.allocated = freeHeader.header.allocated;
+    freeFooter.padded = freeHeader.header.padded;
+    freeFooter.requested_size = 0;
+    freeFooter.two_zeroes = 0;
+    freeFooter.block_size = freeHeader.header.block_size;
+    *freeFooterPointer = freeFooter;
+
+    printf("Remaining Unused Bytes = %d\n", remainingUnusedBytes);
 
     if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
     else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
