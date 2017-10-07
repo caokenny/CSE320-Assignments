@@ -6,6 +6,7 @@
 #include "sfmm.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define EINVAL 22
 #define ENOMEM 12
@@ -110,6 +111,64 @@ void *sf_malloc(size_t size) {
 }
 
 void *sf_realloc(void *ptr, size_t size) {
+    sf_header *newHeader = ptr;
+    sf_footer *newFooter = ptr;
+    newHeader -= 1;
+    newFooter -= 1;
+    newFooter += ((newHeader->block_size << 4) - 8)/8;
+    sf_footer *oldFooter = newFooter;
+    if (newHeader == NULL) abort();
+    if (newHeader < (sf_header*) get_heap_start() || (newFooter + 1) > (sf_footer*) get_heap_end()) abort();
+    if (newHeader->allocated == 0 || newFooter->allocated == 0) abort();
+    if (newFooter->requested_size + 16 != newFooter->block_size << 4){
+        if (newFooter->padded != 1 && newHeader->padded != 1) abort();
+    }
+    if (newHeader->allocated != newFooter->allocated || newHeader->padded != newFooter->padded)
+        abort();
+    if (size == 0){
+        sf_free(ptr);
+        return NULL;
+    }
+    if (size > (newHeader->block_size << 4) - 16) { //Reallocating to a larger size
+        sf_header *newAllocatedMemoryHeader = (sf_header*)sf_malloc(size);
+        if (newAllocatedMemoryHeader == NULL) return NULL;
+        newHeader += 1;
+        memcpy(newAllocatedMemoryHeader, newHeader, (((newHeader - 1)->block_size << 4) - 16));
+        sf_free(ptr);
+        return newAllocatedMemoryHeader;
+    } else { //Reallocating to a smaller size
+        size_t ogPayloadSize = (newHeader->block_size << 4) - 16;
+        int padding = 0;
+        if (ogPayloadSize - size >= LIST_1_MIN) { //split the block
+            newHeader->allocated = 1;
+            if (size % 16 != 0) {
+                padding = 16 - (size%16);
+                newHeader->padded = 1;
+            } else newHeader->padded = 0;
+            newHeader->block_size = 16 + size + padding;
+            newHeader->block_size = newHeader->block_size >> 4;
+            newFooter = (sf_footer*) newHeader;
+            newFooter += ((newHeader->block_size << 4) - 8)/8;
+            newFooter->allocated = newHeader->allocated;
+            newFooter->block_size = newHeader->block_size;
+            newFooter->padded = newHeader->padded;
+            newFooter->requested_size = size;
+            newFooter += 1;
+            sf_header *freeHeader = (sf_header*)newFooter;
+            freeHeader->block_size = (oldFooter->block_size) - (newHeader->block_size);
+            oldFooter->block_size = freeHeader->block_size;
+            freeHeader->allocated = 1;
+            oldFooter->allocated = 1;
+            freeHeader->padded = 1;
+            oldFooter->padded = 1;
+            //oldFooter->requested_size -= (newHeader->block_size << 4) - 16;
+            sf_free(freeHeader + 1);
+            return newHeader + 1;
+        } else { //Don't split the block
+            newFooter->requested_size = size;
+            return newHeader + 1;
+        }
+    }
 	return NULL;
 }
 
