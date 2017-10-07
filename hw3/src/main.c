@@ -5,9 +5,15 @@ int main(int argc, char const *argv[]) {
 
     sf_mem_init();
 
-    double* ptr = sf_malloc(64);
+    double* ptr = sf_malloc(sizeof(long double));
+
+    void *y = sf_malloc(sizeof(char));
 
     sf_varprint(ptr);
+
+    sf_varprint(y);
+
+    sf_snapshot();
 
     *ptr = 320320320e-320;
 
