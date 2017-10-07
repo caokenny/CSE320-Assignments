@@ -112,14 +112,19 @@ void *sf_realloc(void *ptr, size_t size) {
 }
 
 void sf_free(void *ptr) {
-    //sf_header *newHeader = ptr;
-    //printf("%d\n", (newHeader->allocated));
-    /*if (ptr == NULL) {
-        abort();
+    sf_header *newHeader = ptr;
+    sf_footer *newFooter = ptr;
+    newHeader -= 1;
+    newFooter += ((newHeader->block_size<<4) - 8)/8;
+    printf("%d\n", (newHeader->block_size));
+    if (newHeader == NULL) abort();
+    if (newHeader < get_heap_start() || (newFooter + 1) > get_heap_end()) abort();
+    if (newHeader->allocated == 0 || newFooter->allocated == 0) abort();
+    if (newFooter->requested_size + 16 != newFooter->block_size){
+        if (newFooter->padded != 1) abort();
     }
-    if ((ptr - 8) < get_heap_start() ||  ) {
-        abort();
-    }*/
+    if (newHeader->allocated != newFooter->allocated ||
+        newHeader->padded != newFooter->padded) abort();
 	return;
 }
 

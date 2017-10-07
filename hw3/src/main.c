@@ -7,13 +7,7 @@ int main(int argc, char const *argv[]) {
 
     double* ptr = sf_malloc(sizeof(long double));
 
-    void *y = sf_malloc(sizeof(char));
-
-    sf_varprint(ptr);
-
-    sf_varprint(y);
-
-    sf_snapshot();
+    //void *y = sf_malloc(sizeof(char));
 
     *ptr = 320320320e-320;
 
