@@ -285,3 +285,22 @@ Test(sf_memsuite_student, more_than_one_node_in_seg_free_list, .init = sf_mem_in
 
 	cr_assert(fl->head->header.block_size << 4 == 128);
 }
+
+Test(sf_memsuite_student, multiple_pages_malloc_on_first_allocate, .init = sf_mem_init, .fini = sf_mem_fini) {
+	void *k = sf_malloc(16000);
+
+	sf_header *header = (sf_header*)((char*)k - 8);
+
+	cr_assert(header->block_size << 4 == 16016, "Unexpected block size!");
+	cr_assert(header->allocated == 1, "Allocated bit isn't 1");
+
+	free_list *fl = &seg_free_list[find_list_index_from_size(368)];
+
+	cr_assert(fl->head->header.block_size << 4 == 368, "Unexpected free list block size!");
+
+	sf_free(k);
+
+	fl = &seg_free_list[find_list_index_from_size(16384)];
+
+	cr_assert(fl->head->header.block_size << 4 == 16384, "Unexpected free list block size!");
+}
