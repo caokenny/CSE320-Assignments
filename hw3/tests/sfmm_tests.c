@@ -232,3 +232,56 @@ Test(sf_memsuite_student, free_with_realloc, .init = sf_mem_init, .fini = sf_mem
 
 	cr_assert(fl->head->header.block_size << 4 == 4096);
 }
+
+Test(sf_memsuite_student, more_than_one_node_in_seg_free_list, .init = sf_mem_init, .fini = sf_mem_fini) {
+	void *a = sf_malloc(100);
+	void *b = sf_malloc(500);
+	void *c = sf_malloc(1000);
+	void *d = sf_malloc(2000);
+	void *k = sf_malloc(4000);
+
+	sf_header *header = (sf_header*)((char*)a - 8);
+	cr_assert(header->block_size << 4 == 128, "Unexpected block size!");
+
+	header = (sf_header*)((char*)b - 8);
+	cr_assert(header->block_size << 4 == 528, "Unexpected block size!");
+
+	header = (sf_header*)((char*)c - 8);
+	cr_assert(header->block_size << 4 == 1024, "Unexpected block size!");
+
+	header = (sf_header*)((char*)d - 8);
+	cr_assert(header->block_size << 4 == 2016, "Unexpected block size!");
+
+	header = (sf_header*)((char*)k - 8);
+	cr_assert(header->block_size << 4 == 4016, "Unexpected block size!");
+
+	free_list *fl = &seg_free_list[find_list_index_from_size(480)];
+
+	cr_assert(fl->head->header.block_size << 4 == 480);
+
+	sf_free(a);
+
+	sf_free(b);
+
+	sf_free(c);
+
+	sf_free(d);
+
+	sf_free(k);
+
+	fl = &seg_free_list[find_list_index_from_size(4496)];
+
+	cr_assert(fl->head->header.block_size << 4 == 4496, "Unexpected free list block size!");
+
+	fl = &seg_free_list[2];
+
+	cr_assert(fl->head->header.block_size << 4 == 2016, "Unexpected free list block size!");
+
+	cr_assert(fl->head->next->header.block_size << 4 == 1024);
+
+	cr_assert(fl->head->next->next->header.block_size << 4 == 528);
+
+	fl = &seg_free_list[find_list_index_from_size(128)];
+
+	cr_assert(fl->head->header.block_size << 4 == 128);
+}
