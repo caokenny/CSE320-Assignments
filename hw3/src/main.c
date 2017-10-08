@@ -5,17 +5,11 @@ int main(int argc, char const *argv[]) {
 
     sf_mem_init();
 
-    void *ptr = sf_malloc(4000);
+    void *x = sf_malloc(4000);
+    void *y = sf_malloc(5000);
 
-    void *ptr2 = sf_malloc(4000);
-
-    sf_snapshot();
-
-    sf_free(ptr2);
-
-    sf_snapshot();
-
-    sf_free(ptr);
+    sf_varprint(x);
+    sf_varprint(y);
 
     sf_snapshot();
 

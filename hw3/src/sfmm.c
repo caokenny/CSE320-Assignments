@@ -45,9 +45,9 @@ void *sf_malloc(size_t size) {
     else {
         int checkThisFirst = 0;
         //Check to see which list we should be checking first according to the size given
-        if (size < LIST_1_MAX) checkThisFirst = 0;
-        else if (size > LIST_1_MAX && size < LIST_2_MAX) checkThisFirst = 1;
-        else if (size > LIST_2_MAX && size < LIST_3_MAX) checkThisFirst = 2;
+        if (size <= LIST_1_MAX) checkThisFirst = 0;
+        else if (size >= LIST_2_MIN && size <= LIST_2_MAX) checkThisFirst = 1;
+        else if (size >= LIST_3_MIN && size <= LIST_3_MAX) checkThisFirst = 2;
         else checkThisFirst = 3;
         //freeHeader points to the head of seg_free_list[checkThisFirst]
         sf_free_header *freeHeader;
@@ -121,9 +121,9 @@ void *sf_malloc(size_t size) {
 
                     int placeIntoThisList = 0;
 
-                    if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) placeIntoThisList = 0;
-                    else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) placeIntoThisList = 1;
-                    else if (remainingUnusedBytes > LIST_2_MAX && remainingUnusedBytes < LIST_3_MAX) placeIntoThisList = 2;
+                    if(remainingUnusedBytes >= LIST_1_MIN && remainingUnusedBytes <= LIST_1_MAX) placeIntoThisList = 0;
+                    else if (remainingUnusedBytes >= LIST_2_MIN && remainingUnusedBytes <= LIST_2_MAX) placeIntoThisList = 1;
+                    else if (remainingUnusedBytes >= LIST_3_MIN && remainingUnusedBytes <= LIST_3_MAX) placeIntoThisList = 2;
                     else placeIntoThisList = 3;
 
                     if (seg_free_list[placeIntoThisList].head != NULL) {
@@ -135,11 +135,6 @@ void *sf_malloc(size_t size) {
                     } else {
                         seg_free_list[placeIntoThisList].head = freeHeaderPtr;
                     }
-
-                    /*if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
-                    else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
-                    else if (remainingUnusedBytes > LIST_2_MAX && remainingUnusedBytes < LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
-                    else seg_free_list[3].head = freeHeaderPtr;*/
                     return (sf_header*)freeHeader + 1;
                 }
                 else {
@@ -161,9 +156,9 @@ void *sf_malloc(size_t size) {
                 //Now that we have enough space, we coalesce
                 //Get header of previous block of original brk
                 int removeFromHere = 0;
-                if ((headPointer - 1)->block_size << 4 < LIST_1_MAX) removeFromHere = 0;
-                else if ((headPointer - 1)->block_size << 4 > LIST_1_MAX && (headPointer - 1)->block_size << 4 < LIST_2_MAX) removeFromHere = 1;
-                else if ((headPointer - 1)->block_size << 4 > LIST_2_MAX && (headPointer - 1)->block_size << 4 < LIST_3_MAX) removeFromHere = 2;
+                if ((headPointer - 1)->block_size << 4 <= LIST_1_MAX) removeFromHere = 0;
+                else if ((headPointer - 1)->block_size << 4 >= LIST_2_MIN && (headPointer - 1)->block_size << 4 <= LIST_2_MAX) removeFromHere = 1;
+                else if ((headPointer - 1)->block_size << 4 > LIST_3_MIN && (headPointer - 1)->block_size << 4 <= LIST_3_MAX) removeFromHere = 2;
                 else removeFromHere = 3;
 
                 if (seg_free_list[removeFromHere].head->next == NULL && seg_free_list[removeFromHere].head->prev == NULL)
@@ -239,9 +234,9 @@ void *sf_malloc(size_t size) {
         freeFooter.block_size = freeHeaderReg.header.block_size;
         *freeFooterPointer = freeFooter;
 
-        if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
-        else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
-        else if (remainingUnusedBytes > LIST_2_MAX && remainingUnusedBytes < LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
+        if(remainingUnusedBytes >= LIST_1_MIN && remainingUnusedBytes <= LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
+        else if (remainingUnusedBytes >= LIST_2_MIN && remainingUnusedBytes <= LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
+        else if (remainingUnusedBytes >= LIST_3_MIN && remainingUnusedBytes <= LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
         else seg_free_list[3].head = freeHeaderPtr;
 
         return headPointer + 1;
@@ -337,9 +332,9 @@ void sf_free(void *ptr) {
     newFooter->padded = 0;
     size_t freeBlockSize = newHeader->block_size << 4;
     int placeIntoThisList = 0;
-    if (freeBlockSize < LIST_1_MAX) placeIntoThisList = 0;
-    else if (freeBlockSize > LIST_1_MAX && freeBlockSize < LIST_2_MAX) placeIntoThisList = 1;
-    else if (freeBlockSize > LIST_2_MAX && freeBlockSize < LIST_3_MAX) placeIntoThisList = 2;
+    if (freeBlockSize <= LIST_1_MAX) placeIntoThisList = 0;
+    else if (freeBlockSize >= LIST_2_MIN && freeBlockSize <= LIST_2_MAX) placeIntoThisList = 1;
+    else if (freeBlockSize >= LIST_3_MIN && freeBlockSize <= LIST_3_MAX) placeIntoThisList = 2;
     else placeIntoThisList = 3;
 
     sf_free_header *freeHeader = (sf_free_header*)newHeader;
@@ -368,9 +363,9 @@ void coalescBlocks(sf_header *newHeader, sf_footer *newFooter){
     newFooter += ((newHeader->block_size<<4) - 8)/8;
     newFooter->block_size = newHeader->block_size;
     int removeFromThisList = 0;
-    if (oldFreeBlockSize < LIST_1_MAX) removeFromThisList = 0;
-    else if (oldFreeBlockSize > LIST_1_MAX && oldFreeBlockSize < LIST_2_MAX) removeFromThisList = 1;
-    else if (oldFreeBlockSize > LIST_2_MAX && oldFreeBlockSize < LIST_3_MAX) removeFromThisList = 2;
+    if (oldFreeBlockSize <= LIST_1_MAX) removeFromThisList = 0;
+    else if (oldFreeBlockSize >= LIST_2_MIN && oldFreeBlockSize <= LIST_2_MAX) removeFromThisList = 1;
+    else if (oldFreeBlockSize >= LIST_3_MIN && oldFreeBlockSize <= LIST_3_MAX) removeFromThisList = 2;
     else removeFromThisList = 3;
 
     if (seg_free_list[removeFromThisList].head->next == NULL) seg_free_list[removeFromThisList].head = NULL;
@@ -429,9 +424,9 @@ void *firstAllocation(size_t size){
     freeFooter.block_size = freeHeader.header.block_size;
     *freeFooterPointer = freeFooter;
 
-    if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
-    else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
-    else if (remainingUnusedBytes > LIST_2_MAX && remainingUnusedBytes < LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
+    if(remainingUnusedBytes >= LIST_1_MIN && remainingUnusedBytes <= LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
+    else if (remainingUnusedBytes >= LIST_2_MIN && remainingUnusedBytes <= LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
+    else if (remainingUnusedBytes > LIST_3_MIN && remainingUnusedBytes <= LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
     else seg_free_list[3].head = freeHeaderPtr;
 
     return headPointer + 1;
@@ -491,9 +486,9 @@ void *multiplePageAllocations(size_t size){
     freeFooter.block_size = freeHeader.header.block_size;
     *freeFooterPointer = freeFooter;
 
-    if(remainingUnusedBytes > LIST_1_MIN && remainingUnusedBytes < LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
-    else if (remainingUnusedBytes > LIST_1_MAX && remainingUnusedBytes < LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
-    else if (remainingUnusedBytes > LIST_2_MAX && remainingUnusedBytes < LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
+    if(remainingUnusedBytes >= LIST_1_MIN && remainingUnusedBytes <= LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
+    else if (remainingUnusedBytes >= LIST_2_MIN && remainingUnusedBytes <= LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
+    else if (remainingUnusedBytes >= LIST_3_MIN && remainingUnusedBytes <= LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
     else seg_free_list[3].head = freeHeaderPtr;
 
     return headPointer + 1;

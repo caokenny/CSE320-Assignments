@@ -187,3 +187,48 @@ Test(sf_memsuite_student, realloc_smaller_block_free_block, .init = sf_mem_init,
 //DO NOT DELETE THESE COMMENTS
 //############################################
 
+Test(sf_memsuite_student, malloc_multiple_pages, .init = sf_mem_init, .fini = sf_mem_fini) {
+	void *x = sf_malloc(4000);
+	void *y = sf_malloc(5000);
+
+	sf_header *header = (sf_header*)((char*)x-8);
+	cr_assert(header->block_size << 4 == 4016, "Unexpected block size!");
+	header = (sf_header*)((char*)y-8);
+	cr_assert(header->block_size << 4 == 5024, "Unexpected block size!");
+
+	free_list *fl = &seg_free_list[find_list_index_from_size(3248)];
+
+	cr_assert(fl->head->header.block_size << 4 == 3248);
+
+	sf_free(x);
+
+	fl = &seg_free_list[find_list_index_from_size(4016)];
+
+	cr_assert(fl->head->header.block_size << 4 == 4016);
+
+	sf_free(y);
+
+	fl = &seg_free_list[find_list_index_from_size(8272)];
+
+	cr_assert(fl->head->header.block_size << 4 == 8272);
+}
+
+Test(sf_memsuite_student, free_with_realloc, .init = sf_mem_init, .fini = sf_mem_fini) {
+	void *x = sf_malloc(sizeof(double) * 100);
+
+	sf_header *header = (sf_header*)((char*)x - 8);
+	cr_assert(header->block_size << 4 == 816, "Unexpected block size!");
+
+	free_list *fl = &seg_free_list[find_list_index_from_size(3280)];
+	cr_assert(fl->head->header.block_size << 4 == 3280);
+
+	x = sf_realloc(x, 0);
+
+	cr_assert_null(x, "x is not NULL!");
+
+	cr_assert(header->allocated == 0, "Allocated bit is not 0");
+
+	fl = &seg_free_list[find_list_index_from_size(4096)];
+
+	cr_assert(fl->head->header.block_size << 4 == 4096);
+}
