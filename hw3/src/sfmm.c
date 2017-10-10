@@ -40,7 +40,7 @@ void *sf_malloc(size_t size) {
     //If all lists point to NULL then this is our first allocation
     if (size > PAGE_SZ && seg_free_list[0].head == NULL && seg_free_list[1].head == NULL && seg_free_list[2].head == NULL && seg_free_list[3].head == NULL)
         return multiplePageAllocations(size);
-    else if (seg_free_list[0].head == NULL && seg_free_list[1].head == NULL && seg_free_list[2].head == NULL && seg_free_list[3].head == NULL)
+    else if (get_heap_start() == NULL && get_heap_end() == NULL)
         return firstAllocation(size);
     else {
         int checkThisFirst = 0;
@@ -80,69 +80,94 @@ void *sf_malloc(size_t size) {
                     freeHeader->header = header;
                     footerPointer += ((header.block_size<<4) - 8)/8;
                     *footerPointer = footer;
+                    if (footerPointer + 1 != get_heap_end()) {
+                        sf_free_header newFreeHeader;
+                        newFreeHeader.header.allocated = 0;
+                        newFreeHeader.header.padded = 0;
+                        newFreeHeader.header.unused = 0;
+                        newFreeHeader.header.two_zeroes = 0;
+                        newFreeHeader.header.block_size = (remainingUnusedBytes>>4);
+                        newFreeHeader.next = NULL;
+                        newFreeHeader.prev = NULL;
 
-                    sf_free_header newFreeHeader;
-                    newFreeHeader.header.allocated = 0;
-                    newFreeHeader.header.padded = 0;
-                    newFreeHeader.header.unused = 0;
-                    newFreeHeader.header.two_zeroes = 0;
-                    newFreeHeader.header.block_size = (remainingUnusedBytes>>4);
-                    newFreeHeader.next = NULL;
-                    newFreeHeader.prev = NULL;
+                        footerPointer += 1;
+                        sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
+                        //freeHeaderPtr += 1;
+                        *freeHeaderPtr = newFreeHeader;
 
-                    footerPointer += 1;
-                    sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
-                    //freeHeaderPtr += 1;
-                    *freeHeaderPtr = newFreeHeader;
+                        sf_footer freeFooter;
+                        sf_footer *freeFooterPointer = (sf_footer*)freeHeaderPtr;
+                        freeFooterPointer += ((newFreeHeader.header.block_size << 4) - 8)/8;
+                        freeFooter.allocated = newFreeHeader.header.allocated;
+                        freeFooter.padded = newFreeHeader.header.padded;
+                        freeFooter.requested_size = 0;
+                        freeFooter.two_zeroes = 0;
+                        freeFooter.block_size = newFreeHeader.header.block_size;
+                        *freeFooterPointer = freeFooter;
 
-                    sf_footer freeFooter;
-                    sf_footer *freeFooterPointer = (sf_footer*)freeHeaderPtr;
-                    freeFooterPointer += ((newFreeHeader.header.block_size << 4) - 8)/8;
-                    freeFooter.allocated = newFreeHeader.header.allocated;
-                    freeFooter.padded = newFreeHeader.header.padded;
-                    freeFooter.requested_size = 0;
-                    freeFooter.two_zeroes = 0;
-                    freeFooter.block_size = newFreeHeader.header.block_size;
-                    *freeFooterPointer = freeFooter;
+                        if (seg_free_list[i].head->next == NULL && seg_free_list[i].head->prev == NULL)
+                            seg_free_list[i].head = NULL;
+                        else {
+                            sf_free_header *pointToAList = seg_free_list[i].head->next;
+                            while (pointToAList != NULL){
+                                if ((pointToAList->header.block_size << 4) == header.block_size << 4){
+                                    pointToAList->prev->next = pointToAList->next;
+                                    break;
+                                } else {
+                                    pointToAList = pointToAList->next;
+                                }
+                            }
+                        }
 
-                    if (seg_free_list[i].head->next == NULL && seg_free_list[i].head->prev == NULL)
-                        seg_free_list[i].head = NULL;
-                    else {
-                        sf_free_header *pointToAList = seg_free_list[i].head->next;
-                        while (pointToAList != NULL){
-                            if ((pointToAList->header.block_size << 4) == header.block_size << 4){
-                                pointToAList->prev->next = pointToAList->next;
-                                break;
+                        int placeIntoThisList = 0;
+
+                        if(remainingUnusedBytes >= LIST_1_MIN && remainingUnusedBytes <= LIST_1_MAX) placeIntoThisList = 0;
+                        else if (remainingUnusedBytes >= LIST_2_MIN && remainingUnusedBytes <= LIST_2_MAX) placeIntoThisList = 1;
+                        else if (remainingUnusedBytes >= LIST_3_MIN && remainingUnusedBytes <= LIST_3_MAX) placeIntoThisList = 2;
+                        else placeIntoThisList = 3;
+
+                        if (seg_free_list[placeIntoThisList].head != NULL) {
+                            //sf_free_header *pointToAList = seg_free_list[placeIntoThisList].head;
+                            seg_free_list[placeIntoThisList].head->prev = freeHeaderPtr;
+                            freeHeaderPtr->next = seg_free_list[placeIntoThisList].head;
+                            seg_free_list[placeIntoThisList].head = freeHeaderPtr;
+                            freeHeaderPtr->prev = NULL;
+                        } else {
+                            seg_free_list[placeIntoThisList].head = freeHeaderPtr;
+                        }
+                        return (sf_header*)freeHeader + 1;
+                    } else {
+                        if (freeHeader == seg_free_list[i].head){
+                            if (freeHeader->next == NULL) {
+                                seg_free_list[i].head = NULL;
+                                return (sf_header*)freeHeader + 1;
                             } else {
-                                pointToAList = pointToAList->next;
+                                seg_free_list[i].head = freeHeader->next;
+                                seg_free_list[i].head->prev->next = NULL;
+                                seg_free_list[i].head->prev = NULL;
+                                return (sf_header*)freeHeader + 1;
+                            }
+                        } else {
+                            if (freeHeader->next == NULL) {
+                                freeHeader->prev->next = NULL;
+                                freeHeader->prev = NULL;
+                                return (sf_header*)freeHeader + 1;
+                            } else {
+                                freeHeader->prev->next = freeHeader->next;
+                                freeHeader->next->prev = freeHeader->prev;
+                                freeHeader->next = NULL;
+                                freeHeader->prev = NULL;
+                                return (sf_header*)freeHeader + 1;
                             }
                         }
                     }
-
-                    int placeIntoThisList = 0;
-
-                    if(remainingUnusedBytes >= LIST_1_MIN && remainingUnusedBytes <= LIST_1_MAX) placeIntoThisList = 0;
-                    else if (remainingUnusedBytes >= LIST_2_MIN && remainingUnusedBytes <= LIST_2_MAX) placeIntoThisList = 1;
-                    else if (remainingUnusedBytes >= LIST_3_MIN && remainingUnusedBytes <= LIST_3_MAX) placeIntoThisList = 2;
-                    else placeIntoThisList = 3;
-
-                    if (seg_free_list[placeIntoThisList].head != NULL) {
-                        //sf_free_header *pointToAList = seg_free_list[placeIntoThisList].head;
-                        seg_free_list[placeIntoThisList].head->prev = freeHeaderPtr;
-                        freeHeaderPtr->next = seg_free_list[placeIntoThisList].head;
-                        seg_free_list[placeIntoThisList].head = freeHeaderPtr;
-                        freeHeaderPtr->prev = NULL;
-                    } else {
-                        seg_free_list[placeIntoThisList].head = freeHeaderPtr;
-                    }
-                    return (sf_header*)freeHeader + 1;
                 }
                 else {
                     freeHeader = freeHeader->next;
                 }
             }
         }
-        if ((get_heap_end() - get_heap_start()) > (PAGE_SZ * 4)) {
+        if ((get_heap_end() - get_heap_start()) > (PAGE_SZ * 4) || (get_heap_end() - get_heap_start() + PAGE_SZ) > (PAGE_SZ * 4)) {
             sf_errno = ENOMEM;
             return NULL;
         }
@@ -152,7 +177,11 @@ void *sf_malloc(size_t size) {
         size_t totalBlockSize = PAGE_SZ * i;
         while (1){
             if ((headPointer - 1)->allocated == 0){ //if prev block's allocated bit is 0
-                if (((headPointer - 1)->block_size << 4) + (PAGE_SZ * i) < size){ //if prev block's size + PAGE_SZ * i is less than size, allocate more space
+                if (((headPointer - 1)->block_size << 4) + (PAGE_SZ * i) < size + 16){ //if prev block's size + PAGE_SZ * i is less than size, allocate more space
+                    if (get_heap_end() - get_heap_start() > (PAGE_SZ * 4)) {
+                        sf_errno = ENOMEM;
+                        return NULL;
+                    }
                     sf_sbrk();
                     i++;
                     continue;
@@ -187,6 +216,48 @@ void *sf_malloc(size_t size) {
 
                 totalBlockSize = ((headPointer - 1)->block_size << 4) + (PAGE_SZ * i);
                 headPointer -= ((headPointer - 1)->block_size << 4)/8; //This should take us to the previous block's header
+
+                break;
+            } else {
+                if ((PAGE_SZ * i) < size + 16){ //if prev block's size + PAGE_SZ * i is less than size, allocate more space
+                    if (get_heap_end() - get_heap_start() > (PAGE_SZ * 4)) {
+                        sf_errno = ENOMEM;
+                        return NULL;
+                    }
+                    sf_sbrk();
+                    i++;
+                    continue;
+                }
+                //Now that we have enough space, we coalesce
+                //Get header of previous block of original brk
+                /*int removeFromHere = 0;
+                if ((headPointer - 1)->block_size << 4 <= LIST_1_MAX) removeFromHere = 0;
+                else if ((headPointer - 1)->block_size << 4 >= LIST_2_MIN && (headPointer - 1)->block_size << 4 <= LIST_2_MAX) removeFromHere = 1;
+                else if ((headPointer - 1)->block_size << 4 > LIST_3_MIN && (headPointer - 1)->block_size << 4 <= LIST_3_MAX) removeFromHere = 2;
+                else removeFromHere = 3;
+
+                if (seg_free_list[removeFromHere].head->next == NULL && seg_free_list[removeFromHere].head->prev == NULL)
+                    seg_free_list[removeFromHere].head = NULL;
+                else if (seg_free_list[removeFromHere].head->header.block_size << 4 == (headPointer - 1)->block_size << 4) {
+                    seg_free_list[removeFromHere].head = seg_free_list[removeFromHere].head->next;
+                    seg_free_list[removeFromHere].head->prev->next = NULL;
+                    seg_free_list[removeFromHere].head->prev = NULL;
+                }
+                else {
+                    sf_free_header *pointToANode = seg_free_list[removeFromHere].head->next;
+                    while (pointToANode != NULL) {
+                        if (pointToANode->header.block_size << 4 == (headPointer - 1)->block_size << 4) {
+                            pointToANode->prev->next = pointToANode->next;
+                            if (pointToANode->next != NULL)
+                                pointToANode->next->prev = pointToANode->prev;
+                        } else {
+                            pointToANode = pointToANode->next;
+                        }
+                    }
+                }*/
+
+                totalBlockSize = PAGE_SZ * i;
+                //headPointer -= ((headPointer - 1)->block_size << 4)/8; //This should take us to the previous block's header
 
                 break;
             }
