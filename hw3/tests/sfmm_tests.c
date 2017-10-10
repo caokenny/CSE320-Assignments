@@ -340,3 +340,43 @@ Test(sf_memsuite_student, multiple_giant_allocations, .init = sf_mem_init, .fini
 	//sf_snapshot();
 
 }
+
+Test(sf_memsuite_student, use_up_first_page_allocate_more_than_page_again, .init = sf_mem_init, .fini = sf_mem_fini) {
+    void *x = sf_malloc(LIST_3_MIN); //544
+    void *y = sf_malloc(3536); //Use up rest of the page
+
+    sf_header *header = (sf_header*)((char*)x-8);
+    cr_assert(header->block_size << 4 == 544, "Unexpected block size!");
+
+    header = (sf_header*)((char*)y-8);
+    cr_assert(header->block_size << 4 == 3552, "Unexpected block size!");
+
+    free_list *fl;
+
+    for (int i = 0; i < 4; i++) {
+    	fl = &seg_free_list[i];
+    	cr_assert_null(fl->head, "Free list isn't NULL!");
+    }
+
+    sf_free(x); //free x
+
+    fl = &seg_free_list[find_list_index_from_size(544)];
+    cr_assert(fl->head->header.block_size << 4 == 544, "Unexpected free list block size!");
+
+    void *k = sf_malloc(4096); //request for a page of memory
+
+    header = (sf_header*)((char*)k-8);
+    cr_assert(header->block_size << 4 == 4112, "Unexpected block size!");
+
+    fl = &seg_free_list[find_list_index_from_size(4080)];
+    cr_assert(fl->head->header.block_size << 4 == 4080, "Unexpected free list block size!");
+
+    sf_free(y);
+
+    sf_free(k);
+
+    fl = &seg_free_list[find_list_index_from_size(8192)];
+    cr_assert(fl->head->header.block_size << 4 == 8192, "Unexpected free list block size!");
+
+    sf_snapshot();
+}
