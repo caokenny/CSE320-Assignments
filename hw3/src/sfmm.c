@@ -126,7 +126,6 @@ void *sf_malloc(size_t size) {
                         else placeIntoThisList = 3;
 
                         if (seg_free_list[placeIntoThisList].head != NULL) {
-                            //sf_free_header *pointToAList = seg_free_list[placeIntoThisList].head;
                             seg_free_list[placeIntoThisList].head->prev = freeHeaderPtr;
                             freeHeaderPtr->next = seg_free_list[placeIntoThisList].head;
                             seg_free_list[placeIntoThisList].head = freeHeaderPtr;
@@ -267,7 +266,6 @@ void *sf_malloc(size_t size) {
 
         footerPointer += 1;
         sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
-        //freeHeaderPtr += 1;
         *freeHeaderPtr = freeHeaderReg;
 
         sf_footer freeFooter;
@@ -291,13 +289,13 @@ void *sf_malloc(size_t size) {
 }
 
 void *sf_realloc(void *ptr, size_t size) {
+    if (ptr == NULL) abort();
     sf_header *newHeader = ptr;
     sf_footer *newFooter = ptr;
     newHeader -= 1;
     newFooter -= 1;
     newFooter += ((newHeader->block_size << 4) - 8)/8;
     sf_footer *oldFooter = newFooter;
-    if (newHeader == NULL) abort();
     if (newHeader < (sf_header*) get_heap_start() || (newFooter + 1) > (sf_footer*) get_heap_end()) abort();
     if (newHeader->allocated == 0 || newFooter->allocated == 0) abort();
     if (newFooter->requested_size + 16 != newFooter->block_size << 4){
@@ -341,7 +339,6 @@ void *sf_realloc(void *ptr, size_t size) {
             oldFooter->allocated = 1;
             freeHeader->padded = 1;
             oldFooter->padded = 1;
-            //oldFooter->requested_size -= (newHeader->block_size << 4) - 16;
             sf_free(freeHeader + 1);
             return newHeader + 1;
         } else { //Don't split the block
@@ -384,10 +381,6 @@ void sf_free(void *ptr) {
     else placeIntoThisList = 3;
 
     sf_free_header *freeHeader = (sf_free_header*)newHeader;
-
-    /*sf_free_header *freeHeader;
-    freeHeader->header = *newHeader;
-    *newHeader = freeHeader;*/
 
     if (seg_free_list[placeIntoThisList].head == NULL) seg_free_list[placeIntoThisList].head = freeHeader;
     else{
@@ -483,7 +476,6 @@ void *firstAllocation(size_t size){
 
         footerPointer += 1;
         sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
-        //freeHeaderPtr += 1;
         *freeHeaderPtr = freeHeader;
 
         sf_footer freeFooter;
@@ -547,7 +539,6 @@ void *multiplePageAllocations(size_t size){
 
         footerPointer += 1;
         sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
-        //freeHeaderPtr += 1;
         *freeHeaderPtr = freeHeader;
 
         sf_footer freeFooter;
