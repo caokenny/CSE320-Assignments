@@ -167,7 +167,7 @@ void *sf_malloc(size_t size) {
                 }
             }
         }
-        if ((get_heap_end() - get_heap_start()) > (PAGE_SZ * 4) || (get_heap_end() - get_heap_start() + PAGE_SZ) > (PAGE_SZ * 4)) {
+        if ((get_heap_end() - get_heap_start() + PAGE_SZ) > (PAGE_SZ * 4)) {
             sf_errno = ENOMEM;
             return NULL;
         }
@@ -178,7 +178,7 @@ void *sf_malloc(size_t size) {
         while (1){
             if ((headPointer - 1)->allocated == 0){ //if prev block's allocated bit is 0
                 if (((headPointer - 1)->block_size << 4) + (PAGE_SZ * i) < size + 16){ //if prev block's size + PAGE_SZ * i is less than size, allocate more space
-                    if (get_heap_end() - get_heap_start() > (PAGE_SZ * 4)) {
+                    if (get_heap_end() - get_heap_start() + PAGE_SZ > (PAGE_SZ * 4)) {
                         sf_errno = ENOMEM;
                         return NULL;
                     }
@@ -220,7 +220,7 @@ void *sf_malloc(size_t size) {
                 break;
             } else {
                 if ((PAGE_SZ * i) < size + 16){ //if prev block's size + PAGE_SZ * i is less than size, allocate more space
-                    if (get_heap_end() - get_heap_start() > (PAGE_SZ * 4)) {
+                    if (get_heap_end() - get_heap_start() + PAGE_SZ > (PAGE_SZ * 4)) {
                         sf_errno = ENOMEM;
                         return NULL;
                     }
@@ -382,12 +382,12 @@ void *sf_realloc(void *ptr, size_t size) {
 }
 
 void sf_free(void *ptr) {
+    if (ptr == NULL) abort(); //if pointer is null abort
     sf_header *newHeader = ptr; //header pointer = ptr address
     sf_footer *newFooter = ptr; //footer pointer = ptr address
     newHeader -= 1; //decrement to get header address
     newFooter -= 1; //decrement to get header address
     newFooter += ((newHeader->block_size<<4) - 8)/8; //go to footer address
-    if (newHeader == NULL) abort(); //if pointer is null abort
     //if header starts before heap abort, if block ends after heap abort
     if (newHeader < (sf_header*)get_heap_start() || (newFooter + 1) > (sf_footer*)get_heap_end()) abort();
     //if header or footer allocated bit is 0 abort

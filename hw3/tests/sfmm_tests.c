@@ -317,28 +317,23 @@ Test(sf_memsuite_student, multiple_giant_allocations, .init = sf_mem_init, .fini
 	header = (sf_header*)((char*)b - 8);
 	cr_assert(header->block_size << 4 == 8016, "Unexpected block size!");
 
-	header = (sf_header*)((char*)c - 8);
-	cr_assert(header->block_size << 4 == 16016, "Unexpected block size!");
+	header = (sf_header*)c;
+	cr_assert_null(header, "c is not NULL!");
 
 	header = (sf_header*)((char*)d - 8);
 	cr_assert(header->block_size << 4 == 48, "Unexpected block size!");
 
-	free_list *fl = &seg_free_list[find_list_index_from_size(576)];
+	free_list *fl = &seg_free_list[find_list_index_from_size(208)];
 
-	cr_assert(fl->head->header.block_size << 4 == 576, "Unexpected free list block size!");
+	cr_assert(fl->head->header.block_size << 4 == 208, "Unexpected free list block size!");
 
-	//sf_free(c);
-
+	sf_free(d);
 	sf_free(b);
+	sf_free(a);
 
-	sf_snapshot();
+	fl = &seg_free_list[find_list_index_from_size(PAGE_SZ*3)];
 
-	//fl = &seg_free_list[find_list_index_from_size(24032)];
-
-	//cr_assert(fl->head->header.block_size << 4 == 24032, "Unexpected free list block size!");
-
-	//sf_snapshot();
-
+	cr_assert(fl->head->header.block_size << 4 == PAGE_SZ*3, "Unexpected free list block size!");
 }
 
 Test(sf_memsuite_student, use_up_first_page_allocate_more_than_page_again, .init = sf_mem_init, .fini = sf_mem_fini) {
@@ -377,6 +372,4 @@ Test(sf_memsuite_student, use_up_first_page_allocate_more_than_page_again, .init
 
     fl = &seg_free_list[find_list_index_from_size(8192)];
     cr_assert(fl->head->header.block_size << 4 == 8192, "Unexpected free list block size!");
-
-    sf_snapshot();
 }
