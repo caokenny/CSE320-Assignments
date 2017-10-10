@@ -142,6 +142,10 @@ void *sf_malloc(size_t size) {
                 }
             }
         }
+        if ((get_heap_end() - get_heap_start()) > (PAGE_SZ * 4)) {
+            sf_errno = ENOMEM;
+            return NULL;
+        }
         //Anything that runs after this means we couldn't find a suitable memory block
         sf_header *headPointer = sf_sbrk();
         int i = 1;
@@ -369,6 +373,31 @@ void coalescBlocks(sf_header *newHeader, sf_footer *newFooter){
     else removeFromThisList = 3;
 
     if (seg_free_list[removeFromThisList].head->next == NULL) seg_free_list[removeFromThisList].head = NULL;
+    else if (seg_free_list[removeFromThisList].head->header.block_size << 4 == oldFreeBlockSize) {
+        seg_free_list[removeFromThisList].head = seg_free_list[removeFromThisList].head->next;
+        seg_free_list[removeFromThisList].head->prev->next = NULL;
+        seg_free_list[removeFromThisList].head->prev = NULL;
+    }
+    else {
+        sf_free_header *freeHeaderPointer = seg_free_list[removeFromThisList].head->next;
+        while (freeHeaderPointer != NULL) {
+            if (freeHeaderPointer->header.block_size << 4 == oldFreeBlockSize){
+                if (freeHeaderPointer->next == NULL) {
+                    freeHeaderPointer->prev->next = NULL;
+                    freeHeaderPointer->prev = NULL;
+                }
+                else {
+                    freeHeaderPointer->prev->next = freeHeaderPointer->next;
+                    freeHeaderPointer->next->prev = freeHeaderPointer->prev;
+                    freeHeaderPointer->next = NULL;
+                    freeHeaderPointer->prev = NULL;
+                }
+                break;
+            } else {
+                freeHeaderPointer = freeHeaderPointer->next;
+            }
+        }
+    }
     return;
 }
 

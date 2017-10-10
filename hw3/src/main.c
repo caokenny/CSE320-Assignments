@@ -5,26 +5,19 @@ int main(int argc, char const *argv[]) {
 
     sf_mem_init();
 
-    void *a = sf_malloc(4000);
-    void *b = sf_malloc(8000);
-    void *c = sf_malloc(16000);
-    void *d = sf_malloc(32);
+    void *x = sf_malloc(LIST_3_MIN); //544
+    void *y = sf_malloc(LIST_4_MIN); //2080
 
-    sf_free(c);
-    sf_free(b);
-    sf_free(a);
-    sf_free(d);
+    sf_free(x);
+    sf_free(y);
 
+    sf_snapshot();
 
-    /*double* ptr = sf_malloc(88);
+    //sf_snapshot();
 
-    sf_varprint(ptr);
-
-    *ptr = 320320320e-320;
+    //*ptr = 320320320e-320;
 
     //printf("%f\n", *ptr);
-
-    sf_free(ptr); */
 
     sf_mem_fini();
 
