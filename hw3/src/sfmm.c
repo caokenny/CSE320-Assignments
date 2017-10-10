@@ -38,7 +38,7 @@ void *sf_malloc(size_t size) {
         return NULL;
     }
     //If all lists point to NULL then this is our first allocation
-    if (size > PAGE_SZ && seg_free_list[0].head == NULL && seg_free_list[1].head == NULL && seg_free_list[2].head == NULL && seg_free_list[3].head == NULL)
+    if (size >= PAGE_SZ && seg_free_list[0].head == NULL && seg_free_list[1].head == NULL && seg_free_list[2].head == NULL && seg_free_list[3].head == NULL)
         return multiplePageAllocations(size);
     else if (get_heap_start() == NULL && get_heap_end() == NULL)
         return firstAllocation(size);
@@ -92,7 +92,6 @@ void *sf_malloc(size_t size) {
 
                         footerPointer += 1;
                         sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
-                        //freeHeaderPtr += 1;
                         *freeHeaderPtr = newFreeHeader;
 
                         sf_footer freeFooter;
@@ -228,36 +227,8 @@ void *sf_malloc(size_t size) {
                     i++;
                     continue;
                 }
-                //Now that we have enough space, we coalesce
-                //Get header of previous block of original brk
-                /*int removeFromHere = 0;
-                if ((headPointer - 1)->block_size << 4 <= LIST_1_MAX) removeFromHere = 0;
-                else if ((headPointer - 1)->block_size << 4 >= LIST_2_MIN && (headPointer - 1)->block_size << 4 <= LIST_2_MAX) removeFromHere = 1;
-                else if ((headPointer - 1)->block_size << 4 > LIST_3_MIN && (headPointer - 1)->block_size << 4 <= LIST_3_MAX) removeFromHere = 2;
-                else removeFromHere = 3;
-
-                if (seg_free_list[removeFromHere].head->next == NULL && seg_free_list[removeFromHere].head->prev == NULL)
-                    seg_free_list[removeFromHere].head = NULL;
-                else if (seg_free_list[removeFromHere].head->header.block_size << 4 == (headPointer - 1)->block_size << 4) {
-                    seg_free_list[removeFromHere].head = seg_free_list[removeFromHere].head->next;
-                    seg_free_list[removeFromHere].head->prev->next = NULL;
-                    seg_free_list[removeFromHere].head->prev = NULL;
-                }
-                else {
-                    sf_free_header *pointToANode = seg_free_list[removeFromHere].head->next;
-                    while (pointToANode != NULL) {
-                        if (pointToANode->header.block_size << 4 == (headPointer - 1)->block_size << 4) {
-                            pointToANode->prev->next = pointToANode->next;
-                            if (pointToANode->next != NULL)
-                                pointToANode->next->prev = pointToANode->prev;
-                        } else {
-                            pointToANode = pointToANode->next;
-                        }
-                    }
-                }*/
 
                 totalBlockSize = PAGE_SZ * i;
-                //headPointer -= ((headPointer - 1)->block_size << 4)/8; //This should take us to the previous block's header
 
                 break;
             }
@@ -497,37 +468,39 @@ void *firstAllocation(size_t size){
     *headPointer = header; //dereference headPointer and make its contents = header.
     footerPointer += ((header.block_size<<4) - 8)/8; //Get the memory address to correctly place the footer
     *footerPointer = footer; //dereference footerPointer and make its contects = footer.
-    int remainingUnusedBytes = PAGE_SZ - (header.block_size<<4); //Remaining free bytes is the Page_Sz - our block_size
+    if (footerPointer + 1 != get_heap_end()) {
+        int remainingUnusedBytes = PAGE_SZ - (header.block_size<<4); //Remaining free bytes is the Page_Sz - our block_size
 
-    //set correct bits for a free header
-    sf_free_header freeHeader;
-    freeHeader.header.allocated = 0;
-    freeHeader.header.padded = 0;
-    freeHeader.header.unused = 0;
-    freeHeader.header.two_zeroes = 0;
-    freeHeader.header.block_size = (remainingUnusedBytes>>4);
-    freeHeader.next = NULL;
-    freeHeader.prev = NULL;
+        //set correct bits for a free header
+        sf_free_header freeHeader;
+        freeHeader.header.allocated = 0;
+        freeHeader.header.padded = 0;
+        freeHeader.header.unused = 0;
+        freeHeader.header.two_zeroes = 0;
+        freeHeader.header.block_size = (remainingUnusedBytes>>4);
+        freeHeader.next = NULL;
+        freeHeader.prev = NULL;
 
-    footerPointer += 1;
-    sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
-    //freeHeaderPtr += 1;
-    *freeHeaderPtr = freeHeader;
+        footerPointer += 1;
+        sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
+        //freeHeaderPtr += 1;
+        *freeHeaderPtr = freeHeader;
 
-    sf_footer freeFooter;
-    sf_footer *freeFooterPointer = (sf_footer*)freeHeaderPtr;
-    freeFooterPointer += ((freeHeader.header.block_size << 4) - 8)/8;
-    freeFooter.allocated = freeHeader.header.allocated;
-    freeFooter.padded = freeHeader.header.padded;
-    freeFooter.requested_size = 0;
-    freeFooter.two_zeroes = 0;
-    freeFooter.block_size = freeHeader.header.block_size;
-    *freeFooterPointer = freeFooter;
+        sf_footer freeFooter;
+        sf_footer *freeFooterPointer = (sf_footer*)freeHeaderPtr;
+        freeFooterPointer += ((freeHeader.header.block_size << 4) - 8)/8;
+        freeFooter.allocated = freeHeader.header.allocated;
+        freeFooter.padded = freeHeader.header.padded;
+        freeFooter.requested_size = 0;
+        freeFooter.two_zeroes = 0;
+        freeFooter.block_size = freeHeader.header.block_size;
+        *freeFooterPointer = freeFooter;
 
-    if(remainingUnusedBytes >= LIST_1_MIN && remainingUnusedBytes <= LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
-    else if (remainingUnusedBytes >= LIST_2_MIN && remainingUnusedBytes <= LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
-    else if (remainingUnusedBytes > LIST_3_MIN && remainingUnusedBytes <= LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
-    else seg_free_list[3].head = freeHeaderPtr;
+        if(remainingUnusedBytes >= LIST_1_MIN && remainingUnusedBytes <= LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
+        else if (remainingUnusedBytes >= LIST_2_MIN && remainingUnusedBytes <= LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
+        else if (remainingUnusedBytes > LIST_3_MIN && remainingUnusedBytes <= LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
+        else seg_free_list[3].head = freeHeaderPtr;
+    }
 
     return headPointer + 1;
 }
@@ -559,38 +532,39 @@ void *multiplePageAllocations(size_t size){
     *headPointer = header; //dereference headPointer and make its contents = header.
     footerPointer += ((header.block_size<<4) - 8)/8; //Get the memory address to correctly place the footer
     *footerPointer = footer; //dereference footerPointer and make its contects = footer.
-    int remainingUnusedBytes = (PAGE_SZ * ((size + PAGE_SZ)/PAGE_SZ)) - (header.block_size<<4); //Remaining free bytes is the Page_Sz - our block_size
+    if (footerPointer + 1 != get_heap_end()) {
+        int remainingUnusedBytes = (PAGE_SZ * ((size + PAGE_SZ)/PAGE_SZ)) - (header.block_size<<4); //Remaining free bytes is the Page_Sz - our block_size
 
-    //set correct bits for a free header
-    sf_free_header freeHeader;
-    freeHeader.header.allocated = 0;
-    freeHeader.header.padded = 0;
-    freeHeader.header.unused = 0;
-    freeHeader.header.two_zeroes = 0;
-    freeHeader.header.block_size = (remainingUnusedBytes>>4);
-    freeHeader.next = NULL;
-    freeHeader.prev = NULL;
+        //set correct bits for a free header
+        sf_free_header freeHeader;
+        freeHeader.header.allocated = 0;
+        freeHeader.header.padded = 0;
+        freeHeader.header.unused = 0;
+        freeHeader.header.two_zeroes = 0;
+        freeHeader.header.block_size = (remainingUnusedBytes>>4);
+        freeHeader.next = NULL;
+        freeHeader.prev = NULL;
 
-    footerPointer += 1;
-    sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
-    //freeHeaderPtr += 1;
-    *freeHeaderPtr = freeHeader;
+        footerPointer += 1;
+        sf_free_header* freeHeaderPtr = (sf_free_header*)footerPointer;
+        //freeHeaderPtr += 1;
+        *freeHeaderPtr = freeHeader;
 
-    sf_footer freeFooter;
-    sf_footer *freeFooterPointer = (sf_footer*)freeHeaderPtr;
-    freeFooterPointer += ((freeHeader.header.block_size << 4) - 8)/8;
-    freeFooter.allocated = freeHeader.header.allocated;
-    freeFooter.padded = freeHeader.header.padded;
-    freeFooter.requested_size = 0;
-    freeFooter.two_zeroes = 0;
-    freeFooter.block_size = freeHeader.header.block_size;
-    *freeFooterPointer = freeFooter;
+        sf_footer freeFooter;
+        sf_footer *freeFooterPointer = (sf_footer*)freeHeaderPtr;
+        freeFooterPointer += ((freeHeader.header.block_size << 4) - 8)/8;
+        freeFooter.allocated = freeHeader.header.allocated;
+        freeFooter.padded = freeHeader.header.padded;
+        freeFooter.requested_size = 0;
+        freeFooter.two_zeroes = 0;
+        freeFooter.block_size = freeHeader.header.block_size;
+        *freeFooterPointer = freeFooter;
 
-    if(remainingUnusedBytes >= LIST_1_MIN && remainingUnusedBytes <= LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
-    else if (remainingUnusedBytes >= LIST_2_MIN && remainingUnusedBytes <= LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
-    else if (remainingUnusedBytes >= LIST_3_MIN && remainingUnusedBytes <= LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
-    else seg_free_list[3].head = freeHeaderPtr;
+        if(remainingUnusedBytes >= LIST_1_MIN && remainingUnusedBytes <= LIST_1_MAX) seg_free_list[0].head = freeHeaderPtr;
+        else if (remainingUnusedBytes >= LIST_2_MIN && remainingUnusedBytes <= LIST_2_MAX) seg_free_list[1].head = freeHeaderPtr;
+        else if (remainingUnusedBytes >= LIST_3_MIN && remainingUnusedBytes <= LIST_3_MAX) seg_free_list[2].head = freeHeaderPtr;
+        else seg_free_list[3].head = freeHeaderPtr;
+    }
 
     return headPointer + 1;
-    return NULL;
 }
