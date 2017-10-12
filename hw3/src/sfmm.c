@@ -165,7 +165,7 @@ void *sf_malloc(size_t size) {
                 }
             }
         }
-        if ((get_heap_end() - get_heap_start() + PAGE_SZ) > (PAGE_SZ * 4)) {
+        if ((get_heap_end() - get_heap_start() + PAGE_SZ + size) > (PAGE_SZ * 4)) {
             sf_errno = ENOMEM;
             return NULL;
         }
