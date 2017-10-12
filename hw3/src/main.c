@@ -9,8 +9,8 @@ int main(int argc, char const *argv[]) {
     void *b = sf_malloc(8000);
     sf_snapshot();
     void *c = sf_malloc(16000);
+    void *d = sf_malloc(500);
     sf_snapshot();
-    void *d = sf_malloc(32);
 
     if (c == NULL) printf("C IS NULL\n");
 
