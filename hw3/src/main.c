@@ -5,18 +5,17 @@ int main(int argc, char const *argv[]) {
 
     sf_mem_init();
 
-    void *a = sf_malloc(4000);
-    void *b = sf_malloc(8000);
+    void* x = sf_malloc(4080);
     sf_snapshot();
-    void *c = sf_malloc(16000);
-    void *d = sf_malloc(500);
+     sf_malloc(4080);
+     sf_snapshot();
+     sf_malloc(4080);
+    void* y = sf_malloc(4080);
+
     sf_snapshot();
 
-    if (c == NULL) printf("C IS NULL\n");
-
-    sf_free(a);
-    sf_free(b);
-    sf_free(d);
+    sf_free(x);
+    sf_free(y);
 
     sf_mem_fini();
 
