@@ -376,7 +376,7 @@ void sf_free(void *ptr) {
     newHeader->allocated = 0;
     newFooter->allocated = 0;
     //if next block is free coalesc
-    if ((newFooter + 1)->allocated == 0) coalescBlocks(newHeader, newFooter);
+    if ((newFooter + 1)->allocated == 0 && (newFooter + 1) != get_heap_end()) coalescBlocks(newHeader, newFooter);
     newHeader->padded = 0;
     newFooter->padded = 0;
     size_t freeBlockSize = newHeader->block_size << 4;
