@@ -5,9 +5,13 @@
 #include <string.h>
 #include <stdbool.h>
 #include <readline/readline.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "sfish.h"
 #include "debug.h"
+
+int parseLine(char *buf, char **argv);
 
 int main(int argc, char *argv[], char* envp[]) {
     char* input;
@@ -49,6 +53,13 @@ int main(int argc, char *argv[], char* envp[]) {
                 chdir(input + 3);
             }
         }
+        else {
+            parseLine(input, argv);
+            pid_t pid;
+            int childStatus;
+            if ((pid = fork()) == 0) execvp(argv[0], argv);
+            else waitpid(pid, &childStatus, 0);
+        }
 
         if(input == NULL) {
             continue;
@@ -69,4 +80,30 @@ int main(int argc, char *argv[], char* envp[]) {
     debug("%s", "user entered 'exit'");
 
     return EXIT_SUCCESS;
+}
+
+int parseLine(char *buf, char **argv) {
+    char *delim;
+    int argc;
+    int bg;
+
+    buf[strlen(buf)] = ' ';
+    while (*buf && (*buf == ' '))
+        buf++;
+
+    argc = 0;
+    while ((delim = strchr(buf, ' '))) {
+        argv[argc++] = buf;
+        *delim = '\0';
+        buf = delim + 1;
+        while (*buf && (*buf == ' '))
+            buf++;
+    }
+    argv[argc] = NULL;
+
+    if (argc == 0) return 1;
+
+    if ((bg = (*argv[argc-1] == '&')) != 0) argv[--argc] = NULL;
+
+    return bg;
 }
