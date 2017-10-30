@@ -5,10 +5,18 @@ int main(int argc, char const *argv[]) {
 
     sf_mem_init();
 
-    void *x = sf_malloc(4080);
-    void *y = sf_realloc(x, 47);
+    double *ptr = sf_malloc(sizeof(double));
+    sf_malloc(1);
+    sf_malloc(1);
+    sf_malloc(2);
+    sf_malloc(3);
+    double *ptr2=sf_malloc(4);
+    sf_malloc(5);
+    sf_malloc(33);
+    sf_free(ptr);
+    sf_free(ptr2);
 
-    sf_free(y);
+    sf_snapshot();
 
     sf_mem_fini();
 

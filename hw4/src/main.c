@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +25,7 @@ int main(int argc, char *argv[], char* envp[]) {
 
     do {
 
-        input = readline("> ");
+        input = readline(">> ");
 
         write(1, "\e[s", strlen("\e[s"));
         write(1, "\e[20;10H", strlen("\e[20;10H"));
@@ -32,16 +33,33 @@ int main(int argc, char *argv[], char* envp[]) {
         write(1, "\e[u", strlen("\e[u"));
 
         // If EOF is read (aka ^D) readline returns NULL
+        if (strcmp(input, "help") == 0) HELP();
+        else if (strcmp(input, "exit") == 0) break;
+        else if (strcmp(input, "pwd") == 0) printf("%s\n", get_current_dir_name());
+        else if (input[0] == 'c' && input[1] == 'd') {
+            if (*(input + 3) == 0 || *(input + 3) == 32 || strlen(input) == 2) {
+                if (getenv("PPATH") != get_current_dir_name()) setenv("PPATH", get_current_dir_name(), 1);
+                chdir(getenv("HOME"));
+            }
+            else if (*(input + 3) == '-') {
+                chdir(getenv("PPATH"));
+            }
+            else {
+                if (getenv("PPATH") != get_current_dir_name()) setenv("PPATH", get_current_dir_name(), 1);
+                chdir(input + 3);
+            }
+        }
+
         if(input == NULL) {
             continue;
         }
 
 
         // Currently nothing is implemented
-        printf(EXEC_NOT_FOUND, input);
+        //printf(EXEC_NOT_FOUND, input);
 
         // You should change exit to a "builtin" for your hw.
-        exited = strcmp(input, "exit") == 0;
+        //exited = strcmp(input, "exit") == 0;
 
         // Readline mallocs the space for input. You must free it.
         rl_free(input);
