@@ -66,6 +66,8 @@ int main(int argc, char *argv[], char* envp[]) {
 
     } while(!exited);
 
+    printf("%s\n", getenv("PATH"));
+
     debug("%s", "user entered 'exit'");
 
     return EXIT_SUCCESS;
