@@ -28,8 +28,18 @@ int main(int argc, char *argv[], char* envp[]) {
     }
 
     do {
-
-        input = readline(">> ");
+        //if (strstr(get_current_dir_name(), getenv("HOME")) != NULL) input = readline(~)
+        char *prompt = calloc(strlen(get_current_dir_name()) + 1, sizeof(char));
+        char *workingDir = get_current_dir_name();
+        if (strstr(get_current_dir_name(), getenv("HOME")) != NULL) {
+            strcat(prompt, "~");
+            strcat(prompt, workingDir + strlen(getenv("HOME")));
+            strcat(prompt, " :: kencao >> ");
+        } else {
+            strcat(prompt, get_current_dir_name());
+            strcat(prompt, " :: kencao >> ");
+        }
+        input = readline(prompt);
 
         write(1, "\e[s", strlen("\e[s"));
         write(1, "\e[20;10H", strlen("\e[20;10H"));
@@ -58,7 +68,7 @@ int main(int argc, char *argv[], char* envp[]) {
             pid_t pid;
             int childStatus;
             if ((pid = fork()) == 0) execvp(argv[0], argv);
-            else waitpid(pid, &childStatus, 0);
+            waitpid(pid, &childStatus, 0);
         }
 
         if(input == NULL) {
@@ -73,7 +83,8 @@ int main(int argc, char *argv[], char* envp[]) {
         //exited = strcmp(input, "exit") == 0;
 
         // Readline mallocs the space for input. You must free it.
-        rl_free(input);
+        free(prompt);
+        free(input);
 
     } while(!exited);
 
