@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,18 +29,19 @@ int main(int argc, char *argv[], char* envp[]) {
 
     do {
         //if (strstr(get_current_dir_name(), getenv("HOME")) != NULL) input = readline(~)
-        char *prompt = calloc(strlen(get_current_dir_name()) + 1, sizeof(char));
-        char *workingDir = get_current_dir_name();
-        if (strstr(get_current_dir_name(), getenv("HOME")) != NULL) {
+        char cwd[1024];
+        getcwd(cwd, sizeof(cwd));
+        char *prompt = calloc(strlen(cwd) + 1, sizeof(char));
+        if (strstr(cwd, getenv("HOME")) != NULL) {
             strcat(prompt, "~");
-            strcat(prompt, workingDir + strlen(getenv("HOME")));
+            strcat(prompt, cwd + strlen(getenv("HOME")));
             strcat(prompt, " :: kencao >> ");
         } else {
-            strcat(prompt, get_current_dir_name());
+            strcat(prompt, cwd);
             strcat(prompt, " :: kencao >> ");
         }
         input = readline(prompt);
-        if (input == NULL) {
+        if (strcmp(input, "") == 0) {
             free(prompt);
             free(input);
             continue;
@@ -49,7 +49,7 @@ int main(int argc, char *argv[], char* envp[]) {
 
         parseLine(input, argv);
         if (getenv("PPATH") == NULL) {
-            setenv("PPATH", get_current_dir_name(), 1);
+            setenv("PPATH", cwd, 1);
         }
         //write(1, "\e[s", strlen("\e[s"));
         //write(1, "\e[20;10H", strlen("\e[20;10H"));
@@ -57,19 +57,41 @@ int main(int argc, char *argv[], char* envp[]) {
         //write(1, "\e[u", strlen("\e[u"));
 
         // If EOF is read (aka ^D) readline returns NULL
-        if (strcmp(argv[0], "help") == 0) HELP();
+        if (strcmp(argv[0], "help") == 0) {
+            pid_t pid;
+            int childStatus;
+            if ((pid = fork()) == 0)
+                HELP();
+            int wpid = waitpid(pid, &childStatus, 0);
+            if (WIFEXITED(childStatus)) {
+                printf("Child %d exited with status %d\n", wpid, WEXITSTATUS(childStatus));
+            }
+            return EXIT_SUCCESS;
+        }
         else if (strcmp(argv[0], "exit") == 0) break;
-        else if (strcmp(argv[0], "pwd") == 0) printf("%s\n", get_current_dir_name());
+        else if (strcmp(argv[0], "pwd") == 0) {
+            pid_t pid;
+            int childStatus;
+            if ((pid = fork()) == 0) {
+                printf("%s\n", cwd);
+                exit(0);
+            }
+            int wpid = waitpid(pid, &childStatus, 0);
+            if (WIFEXITED(childStatus)) {
+                printf("Child %d exited with status %d\n", wpid, WEXITSTATUS(childStatus));
+            }
+        }
         else if (strcmp(argv[0], "cd") == 0) {
             if (argv[1] == NULL || strcmp(argv[1], " ") == 0) {
-                //if (getenv("PPATH") != get_current_dir_name()) setenv("PPATH", get_current_dir_name(), 1);
+                setenv("PPATH", cwd, 1);
                 chdir(getenv("HOME"));
             }
             else if (strcmp(argv[1], "-") == 0) {
                 chdir(getenv("PPATH"));
+                setenv("PPATH", cwd, 1);
             }
             else {
-                if (getenv("PPATH") != get_current_dir_name()) setenv("PPATH", get_current_dir_name(), 1);
+                setenv("PPATH", cwd, 1);
                 chdir(argv[1]);
             }
         }
