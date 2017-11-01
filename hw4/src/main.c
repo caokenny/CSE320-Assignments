@@ -100,53 +100,74 @@ int main(int argc, char *argv[], char* envp[]) {
             pid_t pid;
             int childStatus;
             //stdout = fmemopen(argv[1], strlen(argv[1]) + 1, "r+");
-            if ((pid = fork()) == 0) {
-                for (int i = 0; i < count; i++) {
-                    if (strcmp(argv[i], ">") == 0) {
-                        int fd;
-                        fd = open(argv[i + 1], O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
-                        dup2(fd, 1);
-                        for (int j = i; j < count; j++) argv[j] = 0;
-                        break;
+            //int starting = 0;
+            while (1) {
+                if ((pid = fork()) == 0) {
+                    for (int i = 0; i < count; i++) {
+                        if (strcmp(argv[i], "<") == 0) {
+                            int fd;
+                            fd = open(argv[i + 1], O_RDONLY);
+                            dup2(fd, 0);
+                            for (int j = i; j < count; j++){
+                                if (strcmp(argv[j], ">") == 0) {
+                                    int fd2;
+                                    fd2 = open(argv[j + 1], O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+                                    dup2(fd2, 1);
+                                }
+                                argv[j] = 0;
+                            }
+                            //starting = i + 1;
+                            break;
+                        }
+                        if (strcmp(argv[i], ">") == 0) {
+                            int fd;
+                            fd = open(argv[i + 1], O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+                            dup2(fd, 1);
+                            for (int j = i; j < count; j++){
+                                if (strcmp(argv[j], "<") == 0) {
+                                    int fd2;
+                                    fd2 = open(argv[j + 1], O_RDONLY);
+                                    dup2(fd2, 0);
+                                }
+                                argv[j] = 0;
+                            }
+                            //starting = i + 1;
+                            break;
+                        }
                     }
-                    if (strcmp(argv[i], "<") == 0) {
-                        int fd;
-                        fd = open(argv[i + 1], O_RDONLY);
-                        dup2(fd, 0);
-                        for (int j = i; j < count; j++) argv[j] = 0;
-                        break;
-                    }
-                }
-                /*if (strcmp(argv[0], "ls") == 0) {
+                    /*if (strcmp(argv[0], "ls") == 0) {
 
-                }
-                else if (strcmp(argv[0], "echo") == 0) {
-                    if (strcmp(argv[2], ">") == 0) {
-                        int fd;
-                        fd = open(argv[3], O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
-                        dup2(fd, 1);
-                        argv[2] = 0;
-                        argv[3] = 0;
                     }
-                }
-                else if (strcmp(argv[0], "cat") == 0) {
-                    if (strcmp(argv[1], "<") == 0) {
-                        int fd;
-                        fd = open(argv[2], O_RDONLY);
-                        argv[1] = 0;
-                        dup2(fd, 0);
+                    else if (strcmp(argv[0], "echo") == 0) {
+                        if (strcmp(argv[2], ">") == 0) {
+                            int fd;
+                            fd = open(argv[3], O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+                            dup2(fd, 1);
+                            argv[2] = 0;
+                            argv[3] = 0;
+                        }
                     }
-                }
-                else if (strcmp(argv[0], "grep") == 0) {
-                    if (strcmp(argv[2], "<") == 0) {
-                        int fd = open(argv[3], O_RDONLY);
-                        argv[2] = 0;
-                        dup2(fd, 0);
+                    else if (strcmp(argv[0], "cat") == 0) {
+                        if (strcmp(argv[1], "<") == 0) {
+                            int fd;
+                            fd = open(argv[2], O_RDONLY);
+                            argv[1] = 0;
+                            dup2(fd, 0);
+                        }
                     }
-                }*/
-                execvp(argv[0], argv);
+                    else if (strcmp(argv[0], "grep") == 0) {
+                        if (strcmp(argv[2], "<") == 0) {
+                            int fd = open(argv[3], O_RDONLY);
+                            argv[2] = 0;
+                            dup2(fd, 0);
+                        }
+                    }*/
+                    execvp(argv[0], argv);
+                }
+                waitpid(pid, &childStatus, 0);
+                //if (starting >= count) break;
+                break;
             }
-            waitpid(pid, &childStatus, 0);
         }
 
 
