@@ -47,7 +47,7 @@ int main(int argc, char *argv[], char* envp[]) {
             continue;
         }
 
-        parseLine(input, argv);
+        //parseLine(input, argv);
         if (getenv("PPATH") == NULL) {
             setenv("PPATH", cwd, 1);
         }
@@ -57,7 +57,7 @@ int main(int argc, char *argv[], char* envp[]) {
         //write(1, "\e[u", strlen("\e[u"));
 
         // If EOF is read (aka ^D) readline returns NULL
-        if (strcmp(argv[0], "help") == 0) {
+        if (strstr(input, "help") == input) {
             pid_t pid;
             int childStatus;
             if ((pid = fork()) == 0)
@@ -68,8 +68,8 @@ int main(int argc, char *argv[], char* envp[]) {
             }
             return EXIT_SUCCESS;
         }
-        else if (strcmp(argv[0], "exit") == 0) break;
-        else if (strcmp(argv[0], "pwd") == 0) {
+        else if (strstr(input, "exit") == input) break;
+        else if (strstr(input, "pwd") == input) {
             pid_t pid;
             int childStatus;
             if ((pid = fork()) == 0) {
@@ -81,26 +81,43 @@ int main(int argc, char *argv[], char* envp[]) {
                 printf("Child %d exited with status %d\n", wpid, WEXITSTATUS(childStatus));
             }
         }
-        else if (strcmp(argv[0], "cd") == 0) {
-            if (argv[1] == NULL || strcmp(argv[1], " ") == 0) {
+        else if (strstr(input, "cd") == input) {
+            if (*(input + 3) == 0 || *(input + 3) == 32) {
                 setenv("PPATH", cwd, 1);
                 chdir(getenv("HOME"));
             }
-            else if (strcmp(argv[1], "-") == 0) {
+            else if (*(input + 3) == '-') {
                 chdir(getenv("PPATH"));
                 setenv("PPATH", cwd, 1);
             }
             else {
                 setenv("PPATH", cwd, 1);
-                chdir(argv[1]);
+                chdir(input + 3);
             }
         }
         else {
+            int count = parseLine(input, argv);
             pid_t pid;
             int childStatus;
             //stdout = fmemopen(argv[1], strlen(argv[1]) + 1, "r+");
             if ((pid = fork()) == 0) {
-                if (strcmp(argv[0], "ls") == 0) {
+                for (int i = 0; i < count; i++) {
+                    if (strcmp(argv[i], ">") == 0) {
+                        int fd;
+                        fd = open(argv[i + 1], O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+                        dup2(fd, 1);
+                        for (int j = i; j < count; j++) argv[j] = 0;
+                        break;
+                    }
+                    if (strcmp(argv[i], "<") == 0) {
+                        int fd;
+                        fd = open(argv[i + 1], O_RDONLY);
+                        dup2(fd, 0);
+                        for (int j = i; j < count; j++) argv[j] = 0;
+                        break;
+                    }
+                }
+                /*if (strcmp(argv[0], "ls") == 0) {
 
                 }
                 else if (strcmp(argv[0], "echo") == 0) {
@@ -126,7 +143,7 @@ int main(int argc, char *argv[], char* envp[]) {
                         argv[2] = 0;
                         dup2(fd, 0);
                     }
-                }
+                }*/
                 execvp(argv[0], argv);
             }
             waitpid(pid, &childStatus, 0);
@@ -186,5 +203,5 @@ int parseLine(char *buf, char **argv) {
 
     if ((bg = (*argv[argc-1] == '&')) != 0) argv[--argc] = NULL;
 
-    return bg;
+    return argc;
 }
