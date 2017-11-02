@@ -198,9 +198,33 @@ pwd                   Prints the absolute path of the current working directory"
                 if (strcmp(argv[i], "|") == 0) pipeCounter++;
             }
             if (pipeCounter != 0) {
-                pid_t pid[pipeCounter+1];
-                int childStatus;
-                for (int i = 0; i < pipeCounter+1; i++) {
+                int pipeEnds1[2];
+                //int pipeEnds2[2];
+                pid_t pid;
+                pipe(pipeEnds1);
+                //pipe(pipeEnds2);
+                //int childStatus;
+                if ((pid = fork()) == 0) {
+                    dup2(pipeEnds1[1], STDOUT_FILENO);
+                    argv[2] = 0;
+                    argv[3] = 0;
+                    argv[4] = 0;
+                    execvp(argv[0], argv);
+                }
+                if ((pid = fork()) == 0) {
+                    dup2(pipeEnds1[0], STDIN_FILENO);
+                    close(pipeEnds1[1]);
+                    close(pipeEnds1[0]);
+                    argv[0] = argv[3];
+                    argv[1] = argv[4];
+                    argv[2] = 0;
+                    argv[3] = 0;
+                    argv[4] = 0;
+                    execvp(argv[0], argv);
+                }
+                //waitpid(pid, &childStatus, 0);
+                //waitpid(pid, &childStatus, 0);
+                /*for (int i = 0; i < pipeCounter+1; i++) {
                     if ((pid[i] = fork()) == 0) {
                         dup2(0, 1);
                         execvp(argv[0], argv);
@@ -208,7 +232,7 @@ pwd                   Prints the absolute path of the current working directory"
                 }
                 for (int i = 0; i < pipeCounter+1; i++) {
                     waitpid(pid[i], &childStatus, 0);
-                }
+                }*/
             } else {
                 //int count = parseLine(input, argv);
                 pid_t pid;
