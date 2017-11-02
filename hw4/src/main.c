@@ -200,18 +200,24 @@ pwd                   Prints the absolute path of the current working directory"
             if (pipeCounter != 0) {
                 int pipeEnds1[2];
                 //int pipeEnds2[2];
-                pid_t pid;
+                pid_t pid1;
+                pid_t pid2;
                 pipe(pipeEnds1);
                 //pipe(pipeEnds2);
-                //int childStatus;
-                if ((pid = fork()) == 0) {
+                int childStatus;
+                int childStatus2;
+                if ((pid1 = fork()) == 0) {
                     dup2(pipeEnds1[1], STDOUT_FILENO);
                     argv[2] = 0;
                     argv[3] = 0;
                     argv[4] = 0;
                     execvp(argv[0], argv);
                 }
-                if ((pid = fork()) == 0) {
+                int wpid1 = waitpid(pid1, &childStatus, 0);
+                if (WIFEXITED(childStatus)) {
+                printf("Child %d exited with status %d\n", wpid1, WEXITSTATUS(childStatus));
+                }
+                if ((pid2 = fork()) == 0) {
                     dup2(pipeEnds1[0], STDIN_FILENO);
                     close(pipeEnds1[1]);
                     close(pipeEnds1[0]);
@@ -222,17 +228,11 @@ pwd                   Prints the absolute path of the current working directory"
                     argv[4] = 0;
                     execvp(argv[0], argv);
                 }
-                //waitpid(pid, &childStatus, 0);
-                //waitpid(pid, &childStatus, 0);
-                /*for (int i = 0; i < pipeCounter+1; i++) {
-                    if ((pid[i] = fork()) == 0) {
-                        dup2(0, 1);
-                        execvp(argv[0], argv);
-                    }
+                //int wpid1 = waitpid(pid1, &childStatus, 0);
+                int wpid2 = waitpid(pid2, &childStatus2, 0);
+                if (WIFEXITED(childStatus2)) {
+                printf("Child %d exited with status %d\n", wpid2, WEXITSTATUS(childStatus));
                 }
-                for (int i = 0; i < pipeCounter+1; i++) {
-                    waitpid(pid[i], &childStatus, 0);
-                }*/
             } else {
                 //int count = parseLine(input, argv);
                 pid_t pid;
