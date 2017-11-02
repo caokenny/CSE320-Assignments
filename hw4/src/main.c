@@ -196,22 +196,42 @@ int parseLine(char *buf, char **argv) {
     while (*buf && (*buf == ' '))
         buf++;
     argc = 0;
+    argv[0] = NULL;
     /*delim = strchr(buf, ' ');
     argv[argc++] = buf;
     *delim = '\0';
     buf = delim + 1;
     while (*buf && (*buf == ' ')) buf++;*/
     while ((delim = strchr(buf, ' '))) {
-        if (buf[0] != '"') {
+        if (buf[0] != '"' && argv[0] == NULL) {
             argv[argc++] = buf;
             *delim = '\0';
             buf = delim + 1;
             while (*buf && (*buf == ' '))
                 buf++;
         }
-        else {
+        else if (buf[0] == '"') {
             delim = strchr(buf + 1, '"');
             argv[argc++] = buf + 1;
+            *delim = '\0';
+            buf = delim + 1;
+            while (*buf && (*buf == ' '))
+                buf++;
+        } else {
+            for (int i = 0; i < strlen(buf); i++) {
+                if (buf[i] == '<' || buf[i] == '>' || buf[i] == '|') {
+                    delim = strchr(buf, buf[i]);
+                    argv[argc++] = buf;
+                    delim--;
+                    *delim = '\0';
+                    buf = delim + 1;
+                    while (*buf && (*buf == ' '))
+                        buf++;
+                    break;
+                }
+            }
+            delim = strchr(buf, ' ');
+            argv[argc++] = buf;
             *delim = '\0';
             buf = delim + 1;
             while (*buf && (*buf == ' '))
