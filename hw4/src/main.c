@@ -47,7 +47,7 @@ int main(int argc, char *argv[], char* envp[]) {
             continue;
         }
 
-        //parseLine(input, argv);
+        int count = parseLine(input, argv);
         if (getenv("PPATH") == NULL) {
             setenv("PPATH", cwd, 1);
         }
@@ -60,26 +60,56 @@ int main(int argc, char *argv[], char* envp[]) {
         if (strstr(input, "help") == input) {
             pid_t pid;
             int childStatus;
-            if ((pid = fork()) == 0)
-                HELP();
-            int wpid = waitpid(pid, &childStatus, 0);
+            if (count == 1) {
+                if ((pid = fork()) == 0)
+                    HELP();
+            } else {
+                if ((pid = fork()) == 0) {
+                    if (strcmp(argv[1], ">") == 0) {
+                        int fd;
+                        char *buf =
+"help                  Displays this help message\n\
+exit                  Exits bash shell\n\
+cd                    Changes working directory of the shell\n\
+    cd -              Changes the directory to the last directory the user was in\n\
+    cd                Goes to the users home directory\n\
+pwd                   Prints the absolute path of the current working directory";\
+                        fd = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+                        write(fd, buf, strlen(buf));
+                    }
+                }
+            }
+            waitpid(pid, &childStatus, 0);
+            /*int wpid = waitpid(pid, &childStatus, 0);
             if (WIFEXITED(childStatus)) {
                 printf("Child %d exited with status %d\n", wpid, WEXITSTATUS(childStatus));
-            }
+            }*/
             return EXIT_SUCCESS;
         }
         else if (strstr(input, "exit") == input) break;
         else if (strstr(input, "pwd") == input) {
             pid_t pid;
             int childStatus;
-            if ((pid = fork()) == 0) {
-                printf("%s\n", cwd);
-                exit(0);
+            if (count == 1) {
+                if ((pid = fork()) == 0) {
+                    printf("%s\n", cwd);
+                    exit(0);
+                }
+            } else {
+                if ((pid = fork()) == 0) {
+                    if (strcmp(argv[1], ">") == 0) {
+                        int fd;
+                        fd = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+                        write(fd, cwd, strlen(cwd));
+                        exit(0);
+                    }
+                }
             }
-            int wpid = waitpid(pid, &childStatus, 0);
-            if (WIFEXITED(childStatus)) {
+            waitpid(pid, &childStatus, 0);
+            //int wpid = waitpid(pid, &childStatus, 0);
+            /*if (WIFEXITED(childStatus)) {
                 printf("Child %d exited with status %d\n", wpid, WEXITSTATUS(childStatus));
-            }
+            }*/
         }
         else if (strstr(input, "cd") == input) {
             if (*(input + 3) == 0 || *(input + 3) == 32) {
@@ -96,7 +126,7 @@ int main(int argc, char *argv[], char* envp[]) {
             }
         }
         else {
-            int count = parseLine(input, argv);
+            //int count = parseLine(input, argv);
             pid_t pid;
             int childStatus;
             //stdout = fmemopen(argv[1], strlen(argv[1]) + 1, "r+");
@@ -219,7 +249,17 @@ int parseLine(char *buf, char **argv) {
                 buf++;
         } else {
             for (int i = 0; i < strlen(buf); i++) {
-                if (buf[i] == '<' || buf[i] == '>' || buf[i] == '|') {
+                if ((buf[i] == '<' || buf[i] == '>' || buf[i] == '|') && i == 0) {
+                    delim = strchr(buf, buf[i]);
+                    argv[argc++] = buf;
+                    delim++;
+                    *delim = '\0';
+                    buf = delim + 1;
+                    while (*buf && (*buf == ' '))
+                        buf++;
+                    break;
+                }
+                else if (buf[i] == '<' || buf[i] == '>' || buf[i] == '|') {
                     delim = strchr(buf, buf[i]);
                     argv[argc++] = buf;
                     delim--;
