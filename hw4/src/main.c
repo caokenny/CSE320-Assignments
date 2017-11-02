@@ -105,7 +105,7 @@ pwd                   Prints the absolute path of the current working directory"
             }*/
             return EXIT_SUCCESS;
         }
-        else if (strstr(input, "color") == input) {
+        /*else if (strstr(input, "color") == input) {
             //free(home);
             //free(noHome);
             if (strcmp(argv[1], "RED") == 0) {
@@ -148,7 +148,7 @@ pwd                   Prints the absolute path of the current working directory"
             free(input);
             continue;
 
-        }
+        }*/
         else if (strstr(input, "exit") == input) break;
         else if (strstr(input, "pwd") == input) {
             pid_t pid;
@@ -193,10 +193,27 @@ pwd                   Prints the absolute path of the current working directory"
             }
         }
         else {
-            //int count = parseLine(input, argv);
-            pid_t pid;
-            int childStatus;
-            while (1) {
+            int pipeCounter = 0;
+            for (int i = 0; i < count; i++) {
+                if (strcmp(argv[i], "|") == 0) pipeCounter++;
+            }
+            if (pipeCounter != 0) {
+                pid_t pid[pipeCounter+1];
+                int childStatus;
+                for (int i = 0; i < pipeCounter+1; i++) {
+                    if ((pid[i] = fork()) == 0) {
+                        dup2(0, 1);
+                        execvp(argv[0], argv);
+                    }
+                }
+                for (int i = 0; i < pipeCounter+1; i++) {
+                    waitpid(pid[i], &childStatus, 0);
+                }
+            } else {
+                //int count = parseLine(input, argv);
+                pid_t pid;
+                int childStatus;
+                //int pipeCounter = 0;
                 if ((pid = fork()) == 0) {
                     for (int i = 0; i < count; i++) {
                         if (strcmp(argv[i], "<") == 0) {
@@ -231,7 +248,6 @@ pwd                   Prints the absolute path of the current working directory"
                     execvp(argv[0], argv);
                 }
                 waitpid(pid, &childStatus, 0);
-                break;
             }
         }
 
@@ -247,8 +263,8 @@ pwd                   Prints the absolute path of the current working directory"
         rl_free(input);
     } while(!exited);
 
-    free(home);
-    free(noHome);
+    //free(home);
+    //free(noHome);
 
     debug("%s", "user entered 'exit'");
 
