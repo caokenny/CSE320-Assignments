@@ -112,7 +112,11 @@ pwd                   Prints the absolute path of the current working directory"
             }*/
         }
         else if (strstr(input, "cd") == input) {
-            if (*(input + 3) == 0 || *(input + 3) == 32) {
+            if (count == 1) {
+                setenv("PPATH", cwd, 1);
+                chdir(getenv("HOME"));
+            }
+            else if (*(input + 3) == 0 || *(input + 3) == 32) {
                 setenv("PPATH", cwd, 1);
                 chdir(getenv("HOME"));
             }
@@ -129,8 +133,6 @@ pwd                   Prints the absolute path of the current working directory"
             //int count = parseLine(input, argv);
             pid_t pid;
             int childStatus;
-            //stdout = fmemopen(argv[1], strlen(argv[1]) + 1, "r+");
-            //int starting = 0;
             while (1) {
                 if ((pid = fork()) == 0) {
                     for (int i = 0; i < count; i++) {
@@ -146,7 +148,6 @@ pwd                   Prints the absolute path of the current working directory"
                                 }
                                 argv[j] = 0;
                             }
-                            //starting = i + 1;
                             break;
                         }
                         if (strcmp(argv[i], ">") == 0) {
@@ -161,41 +162,12 @@ pwd                   Prints the absolute path of the current working directory"
                                 }
                                 argv[j] = 0;
                             }
-                            //starting = i + 1;
                             break;
                         }
                     }
-                    /*if (strcmp(argv[0], "ls") == 0) {
-
-                    }
-                    else if (strcmp(argv[0], "echo") == 0) {
-                        if (strcmp(argv[2], ">") == 0) {
-                            int fd;
-                            fd = open(argv[3], O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
-                            dup2(fd, 1);
-                            argv[2] = 0;
-                            argv[3] = 0;
-                        }
-                    }
-                    else if (strcmp(argv[0], "cat") == 0) {
-                        if (strcmp(argv[1], "<") == 0) {
-                            int fd;
-                            fd = open(argv[2], O_RDONLY);
-                            argv[1] = 0;
-                            dup2(fd, 0);
-                        }
-                    }
-                    else if (strcmp(argv[0], "grep") == 0) {
-                        if (strcmp(argv[2], "<") == 0) {
-                            int fd = open(argv[3], O_RDONLY);
-                            argv[2] = 0;
-                            dup2(fd, 0);
-                        }
-                    }*/
                     execvp(argv[0], argv);
                 }
                 waitpid(pid, &childStatus, 0);
-                //if (starting >= count) break;
                 break;
             }
         }
@@ -227,11 +199,6 @@ int parseLine(char *buf, char **argv) {
         buf++;
     argc = 0;
     argv[0] = NULL;
-    /*delim = strchr(buf, ' ');
-    argv[argc++] = buf;
-    *delim = '\0';
-    buf = delim + 1;
-    while (*buf && (*buf == ' ')) buf++;*/
     while ((delim = strchr(buf, ' '))) {
         if (buf[0] != '"' && argv[0] == NULL) {
             argv[argc++] = buf;
