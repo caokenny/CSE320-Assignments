@@ -8,14 +8,27 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
+#define BWN   "\x1B[30m"
+#define RED   "\x1B[31m"
+#define GRN   "\x1B[32m"
+#define YEL   "\x1B[33m"
+#define BLU   "\x1B[34m"
+#define MAG   "\x1B[35m"
+#define CYN   "\x1B[36m"
+#define WHT   "\x1B[37m"
+#define RESET "\x1B[0m"
+
 #include "sfish.h"
 #include "debug.h"
 
 int parseLine(char *buf, char **argv);
 
 int main(int argc, char *argv[], char* envp[]) {
-    char* input;
+    //char* colors[] = {"\x1B[0m", "\x1B[31m", "\x1B[32m", "\x1B[33m", "\x1B[34m", "\x1B[35m", "\x1B[36m", "\x1B[37m"};
+    char *input;
     bool exited = false;
+    char *home = "~";
+    char *noHome = "";
 
     if(!isatty(STDIN_FILENO)) {
         // If your shell is reading from a piped file
@@ -31,14 +44,15 @@ int main(int argc, char *argv[], char* envp[]) {
         //if (strstr(get_current_dir_name(), getenv("HOME")) != NULL) input = readline(~)
         char cwd[1024];
         getcwd(cwd, sizeof(cwd));
-        char *prompt = calloc(strlen(cwd) + 1, sizeof(char));
+        char *prompt = calloc(strlen(cwd) + 10, sizeof(char));
         if (strstr(cwd, getenv("HOME")) != NULL) {
-            strcat(prompt, "~");
+            strcat(prompt, home);
             strcat(prompt, cwd + strlen(getenv("HOME")));
-            strcat(prompt, " :: kencao >> ");
+            strcat(prompt, " :: kencao >> " RESET);
         } else {
+            strcat(prompt, noHome);
             strcat(prompt, cwd);
-            strcat(prompt, " :: kencao >> ");
+            strcat(prompt, " :: kencao >> " RESET);
         }
         input = readline(prompt);
         if (strcmp(input, "") == 0) {
@@ -61,8 +75,11 @@ int main(int argc, char *argv[], char* envp[]) {
             pid_t pid;
             int childStatus;
             if (count == 1) {
-                if ((pid = fork()) == 0)
+                if ((pid = fork()) == 0){
+                    free(prompt);
+                    free(input);
                     HELP();
+                }
             } else {
                 if ((pid = fork()) == 0) {
                     if (strcmp(argv[1], ">") == 0) {
@@ -80,11 +97,57 @@ pwd                   Prints the absolute path of the current working directory"
                 }
             }
             waitpid(pid, &childStatus, 0);
+            free(prompt);
+            free(input);
             /*int wpid = waitpid(pid, &childStatus, 0);
             if (WIFEXITED(childStatus)) {
                 printf("Child %d exited with status %d\n", wpid, WEXITSTATUS(childStatus));
             }*/
             return EXIT_SUCCESS;
+        }
+        else if (strstr(input, "color") == input) {
+            //free(home);
+            //free(noHome);
+            if (strcmp(argv[1], "RED") == 0) {
+                home = RED "~";
+                noHome = RED "";
+            }
+            else if (strcmp(argv[1], "GRN") == 0) {
+                home = GRN "~";
+                noHome = GRN "";
+            }
+            else if (strcmp(argv[1], "YEL") == 0) {
+                home = YEL "~";
+                noHome = YEL "";
+            }
+            else if (strcmp(argv[1], "BLU") == 0) {
+                home = BLU "~";
+                noHome = BLU "";
+            }
+            else if (strcmp(argv[1], "MAG") == 0) {
+                home = MAG "~";
+                noHome = MAG "";
+            }
+            else if (strcmp(argv[1], "CYN") == 0) {
+                home = CYN "~";
+                noHome = CYN "";
+            }
+            else if (strcmp(argv[1], "WHT") == 0) {
+                home = WHT "~";
+                noHome = WHT "";
+            }
+            else if (strcmp(argv[1], "BWN") == 0) {
+                home = BWN "~";
+                noHome = BWN "";
+            }
+            else {
+                home = RESET "~";
+                noHome = RESET "";
+            }
+            free(prompt);
+            free(input);
+            continue;
+
         }
         else if (strstr(input, "exit") == input) break;
         else if (strstr(input, "pwd") == input) {
@@ -181,8 +244,11 @@ pwd                   Prints the absolute path of the current working directory"
 
         // Readline mallocs the space for input. You must free it.
         free(prompt);
-        free(input);
+        rl_free(input);
     } while(!exited);
+
+    free(home);
+    free(noHome);
 
     debug("%s", "user entered 'exit'");
 
