@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #define BWN   "\x1B[30m"
 #define RED   "\x1B[31m"
@@ -103,7 +104,6 @@ pwd                   Prints the absolute path of the current working directory"
             if (WIFEXITED(childStatus)) {
                 printf("Child %d exited with status %d\n", wpid, WEXITSTATUS(childStatus));
             }*/
-            return EXIT_SUCCESS;
         }
         /*else if (strstr(input, "color") == input) {
             //free(home);
@@ -199,15 +199,16 @@ pwd                   Prints the absolute path of the current working directory"
             }
             if (pipeCounter != 0) {
                 pid_t pid;
-                //int childStatus;
+                sigset_t mask, prev;
+                sigprocmask(SIG_BLOCK, &mask, &prev);
                 if ((pid = fork()) == 0) {
                     int pipeEnds1[2];
-                    //int pipeEnds2[2];
                     pid_t pid[2];
                     pipe(pipeEnds1);
-                    //pipe(pipeEnds2);
-                    int childStatus;
+                    //int childStatus;
+                    sigset_t mask, prev;
                     for (int i = 0; i < pipeCounter + 1; i++) {
+                        sigprocmask(SIG_BLOCK, &mask, &prev);
                         if ((pid[i] = fork()) == 0) {
                             dup2(pipeEnds1[1], STDOUT_FILENO);
                             close(pipeEnds1[1]);
@@ -232,33 +233,27 @@ pwd                   Prints the absolute path of the current working directory"
                         close(pipeEnds1[0]);
                     }
                     for (int i = 0; i < pipeCounter + 1; i++) {
-                        waitpid(pid[i], &childStatus, 0);
+                        while (!pid[i])
+                            sigsuspend(&prev);
                     }
-                    /*for (int i = 0; i < 2; i++) {
-                        int wpid = waitpid(pid[i], &childStatus, 0);
-                        if (WIFEXITED(childStatus)) {
-                            printf("Child %d exited with status %d\n", wpid, WEXITSTATUS(childStatus));
-                        }
-                    }*/
+                    for (int i = 0; i < pipeCounter + 1; i++) {
+                        waitpid(pid[i], NULL, 0);
+                    }
                     exit(0);
                 }
+                while (!pid)
+                    sigsuspend(&prev);
                 wait(NULL);
-                /*if ((pid[1] = fork()) == 0) {
-                    printf("Second Child PID %d\n", getpid());
-                    dup2(pipeEnds1[0], STDIN_FILENO);
-                    dup2(pipeEnds1[1], STDOUT_FILENO);
-                    close(pipeEnds1[1]);
-                    close(pipeEnds1[0]);
-                    argv[0] = argv[3];
-                    argv[1] = argv[4];
-                    argv[2] = 0;
-                    argv[3] = 0;
-                    argv[4] = 0;
-                    execvp(argv[0], argv);
-                }*/
             } else {
+                sigset_t mask, prev;
+                //sighandler_t sigchld_handler, sigint_handler;
+                //signal(SIGCHLD, sigchld_handler);
+                //signal(SIGINT, sigint_handler);
+                //sigemptyset(&mask);
+                //sigaddset(&mask, SIGCHLD);
                 pid_t pid;
                 int childStatus;
+                sigprocmask(SIG_BLOCK, &mask, &prev);
                 if ((pid = fork()) == 0) {
                     for (int i = 0; i < count; i++) {
                         if (strcmp(argv[i], "<") == 0) {
@@ -292,7 +287,10 @@ pwd                   Prints the absolute path of the current working directory"
                     }
                     execvp(argv[0], argv);
                 }
+                while (!pid)
+                    sigsuspend(&prev);
                 waitpid(pid, &childStatus, 0);
+
             }
         }
 
