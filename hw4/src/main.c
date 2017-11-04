@@ -24,6 +24,11 @@
 
 int parseLine(char *buf, char **argv);
 
+
+void sigchld_handler(int s) {
+    waitpid(-1, NULL, 0);
+}
+
 int main(int argc, char *argv[], char* envp[]) {
     //char* colors[] = {"\x1B[0m", "\x1B[31m", "\x1B[32m", "\x1B[33m", "\x1B[34m", "\x1B[35m", "\x1B[36m", "\x1B[37m"};
     char *input;
@@ -198,15 +203,21 @@ pwd                   Prints the absolute path of the current working directory"
                 if (strcmp(argv[i], "|") == 0) pipeCounter++;
             }
             if (pipeCounter != 0) {
-                pid_t pid;
                 sigset_t mask, prev;
+                signal(SIGCHLD, sigchld_handler);
+                sigemptyset(&mask);
+                sigaddset(&mask, SIGCHLD);
+                pid_t pid;
                 sigprocmask(SIG_BLOCK, &mask, &prev);
                 if ((pid = fork()) == 0) {
+                    sigset_t mask, prev;
+                    signal(SIGCHLD, sigchld_handler);
+                    sigemptyset(&mask);
+                    sigaddset(&mask, SIGCHLD);
                     int pipeEnds1[2];
                     pid_t pid[2];
                     pipe(pipeEnds1);
                     //int childStatus;
-                    sigset_t mask, prev;
                     for (int i = 0; i < pipeCounter + 1; i++) {
                         sigprocmask(SIG_BLOCK, &mask, &prev);
                         if ((pid[i] = fork()) == 0) {
@@ -226,15 +237,19 @@ pwd                   Prints the absolute path of the current working directory"
                                     argv[j] = 0;
                                 }
                             }
-                            execvp(argv[0], argv);
+                            if (execvp(argv[0], argv) < 0) {
+                                printf(EXEC_NOT_FOUND, argv[0]);
+                                exit(EXIT_FAILURE);
+                            }
                         }
                         dup2(pipeEnds1[0], STDIN_FILENO);
                         close(pipeEnds1[1]);
                         close(pipeEnds1[0]);
                     }
                     for (int i = 0; i < pipeCounter + 1; i++) {
-                        while (!pid[i])
+                        while(!pid[i])
                             sigsuspend(&prev);
+                        sigprocmask(SIG_UNBLOCK, &prev, NULL);
                     }
                     for (int i = 0; i < pipeCounter + 1; i++) {
                         waitpid(pid[i], NULL, 0);
@@ -243,14 +258,13 @@ pwd                   Prints the absolute path of the current working directory"
                 }
                 while (!pid)
                     sigsuspend(&prev);
+                sigprocmask(SIG_UNBLOCK, &prev, NULL);
                 wait(NULL);
             } else {
                 sigset_t mask, prev;
-                //sighandler_t sigchld_handler, sigint_handler;
-                //signal(SIGCHLD, sigchld_handler);
-                //signal(SIGINT, sigint_handler);
-                //sigemptyset(&mask);
-                //sigaddset(&mask, SIGCHLD);
+                signal(SIGCHLD, sigchld_handler);
+                sigemptyset(&mask);
+                sigaddset(&mask, SIGCHLD);
                 pid_t pid;
                 int childStatus;
                 sigprocmask(SIG_BLOCK, &mask, &prev);
@@ -285,10 +299,15 @@ pwd                   Prints the absolute path of the current working directory"
                             break;
                         }
                     }
-                    execvp(argv[0], argv);
+                    if (execvp(argv[0], argv)) {
+                        printf(EXEC_NOT_FOUND, argv[0]);
+                        exit(EXIT_FAILURE);
+                    }
                 }
-                while (!pid)
+                while(!pid)
                     sigsuspend(&prev);
+
+                sigprocmask(SIG_UNBLOCK, &prev, NULL);
                 waitpid(pid, &childStatus, 0);
 
             }
