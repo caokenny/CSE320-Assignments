@@ -29,6 +29,13 @@ void sigchld_handler(int s) {
     waitpid(-1, NULL, 0);
 }
 
+void sigint_handler(int s) {
+}
+
+void sigstp_handler(int s) {
+    _exit(EXIT_SUCCESS);
+}
+
 int main(int argc, char *argv[], char* envp[]) {
     //char* colors[] = {"\x1B[0m", "\x1B[31m", "\x1B[32m", "\x1B[33m", "\x1B[34m", "\x1B[35m", "\x1B[36m", "\x1B[37m"};
     char *input;
@@ -66,10 +73,13 @@ int main(int argc, char *argv[], char* envp[]) {
             free(input);
             continue;
         }
-
-        int count = parseLine(input, argv);
         if (getenv("PPATH") == NULL) {
             setenv("PPATH", cwd, 1);
+        }
+        int count = parseLine(input, argv);
+        int pipeCounter = 0;
+        for (int i = 0; i < count; i++) {
+            if (strcmp(argv[i], "|") == 0) pipeCounter++;
         }
         //write(1, "\e[s", strlen("\e[s"));
         //write(1, "\e[20;10H", strlen("\e[20;10H"));
@@ -79,12 +89,10 @@ int main(int argc, char *argv[], char* envp[]) {
         // If EOF is read (aka ^D) readline returns NULL
         if (strstr(input, "help") == input) {
             pid_t pid;
-            int childStatus;
             if (count == 1) {
                 if ((pid = fork()) == 0){
-                    free(prompt);
-                    free(input);
                     HELP();
+                    exit(EXIT_SUCCESS);
                 }
             } else {
                 if ((pid = fork()) == 0) {
@@ -99,12 +107,12 @@ cd                    Changes working directory of the shell\n\
 pwd                   Prints the absolute path of the current working directory";\
                         fd = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
                         write(fd, buf, strlen(buf));
+                        close(fd);
                     }
+                    exit(EXIT_SUCCESS);
                 }
             }
-            waitpid(pid, &childStatus, 0);
-            free(prompt);
-            free(input);
+            waitpid(pid, NULL, 0);
             /*int wpid = waitpid(pid, &childStatus, 0);
             if (WIFEXITED(childStatus)) {
                 printf("Child %d exited with status %d\n", wpid, WEXITSTATUS(childStatus));
@@ -198,13 +206,11 @@ pwd                   Prints the absolute path of the current working directory"
             }
         }
         else {
-            int pipeCounter = 0;
-            for (int i = 0; i < count; i++) {
-                if (strcmp(argv[i], "|") == 0) pipeCounter++;
-            }
             if (pipeCounter != 0) {
                 sigset_t mask, prev;
                 signal(SIGCHLD, sigchld_handler);
+                signal(SIGINT, sigint_handler);
+                signal(SIGTSTP, sigstp_handler);
                 sigemptyset(&mask);
                 sigaddset(&mask, SIGCHLD);
                 pid_t pid;
@@ -212,12 +218,13 @@ pwd                   Prints the absolute path of the current working directory"
                 if ((pid = fork()) == 0) {
                     sigset_t mask, prev;
                     signal(SIGCHLD, sigchld_handler);
+                    signal(SIGINT, sigint_handler);
+                    signal(SIGTSTP, sigstp_handler);
                     sigemptyset(&mask);
                     sigaddset(&mask, SIGCHLD);
                     int pipeEnds1[2];
                     pid_t pid[2];
                     pipe(pipeEnds1);
-                    //int childStatus;
                     for (int i = 0; i < pipeCounter + 1; i++) {
                         sigprocmask(SIG_BLOCK, &mask, &prev);
                         if ((pid[i] = fork()) == 0) {
@@ -263,6 +270,8 @@ pwd                   Prints the absolute path of the current working directory"
             } else {
                 sigset_t mask, prev;
                 signal(SIGCHLD, sigchld_handler);
+                signal(SIGINT, sigint_handler);
+                signal(SIGTSTP, sigstp_handler);
                 sigemptyset(&mask);
                 sigaddset(&mask, SIGCHLD);
                 pid_t pid;
@@ -360,8 +369,9 @@ int parseLine(char *buf, char **argv) {
             while (*buf && (*buf == ' '))
                 buf++;
         } else {
+
             for (int i = 0; i < strlen(buf); i++) {
-                if ((buf[i] == '<' || buf[i] == '>' || buf[i] == '|') && i == 0) {
+                /*if ((buf[i] == '<' || buf[i] == '>' || buf[i] == '|') && i == 0) {
                     delim = strchr(buf, buf[i]);
                     argv[argc++] = buf;
                     delim++;
@@ -370,8 +380,8 @@ int parseLine(char *buf, char **argv) {
                     while (*buf && (*buf == ' '))
                         buf++;
                     break;
-                }
-                else if (buf[i] == '<' || buf[i] == '>' || buf[i] == '|') {
+                }*/
+                if (buf[i] == '<' || buf[i] == '>' || buf[i] == '|') {
                     delim = strchr(buf, buf[i]);
                     argv[argc++] = buf;
                     delim--;
@@ -379,15 +389,37 @@ int parseLine(char *buf, char **argv) {
                     buf = delim + 1;
                     while (*buf && (*buf == ' '))
                         buf++;
+                    /*char direction[2];
+                    direction[0] = buf[0];
+                    direction[1] = '\0';*/
+                    argv[argc++] = buf;
+                    *(buf + 1) = '\0';
+                    buf += 2;
+                    while (*buf && (*buf == ' '))
+                        buf++;
+                    delim = strchr(buf, ' ');
+                    argv[argc++] = buf;
+                    *delim = '\0';
+                    buf = delim + 1;
+                    while (*buf && (*buf == ' '))
+                        buf++;
                     break;
                 }
             }
-            delim = strchr(buf, ' ');
-            argv[argc++] = buf;
-            *delim = '\0';
-            buf = delim + 1;
-            while (*buf && (*buf == ' '))
-                buf++;
+            delim = strchr(buf, '>');
+            if (delim == NULL) delim = strchr(buf, '<');
+            if (delim == NULL) delim = strchr(buf, '|');
+            if (delim == NULL) {
+                buf[strlen(buf) - 1] = '\0';
+                argv[argc++] = buf;
+                buf += strlen(buf);
+            } else {
+                argv[argc++] = buf;
+                *delim = '\0';
+                buf = delim + 1;
+                while (*buf && (*buf == ' '))
+                    buf++;
+            }
         }
     }
     argv[argc] = NULL;

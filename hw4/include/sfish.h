@@ -17,7 +17,6 @@ fprintf(stderr, "%s\n", \
     "   cd -                Changes the directory to the last directory the user was in\n" \
     "   cd                  Goes to the users home directory\n" \
     "pwd                    Prints the absolute path of the current working directory"); \
-    exit(0); \
 } while(0)
 
 
