@@ -32,16 +32,19 @@ void sigchld_handler(int s) {
 void sigint_handler(int s) {
 }
 
-void sigstp_handler(int s) {
-    _exit(EXIT_SUCCESS);
+pid_t childPID = (pid_t) -1;
+void sigtstp_handler(int s) {
+    kill(childPID, SIGSTOP);
+    kill(getpid(), SIGCONT);
 }
 
 int main(int argc, char *argv[], char* envp[]) {
     //char* colors[] = {"\x1B[0m", "\x1B[31m", "\x1B[32m", "\x1B[33m", "\x1B[34m", "\x1B[35m", "\x1B[36m", "\x1B[37m"};
     char *input;
     bool exited = false;
-    char *home = "~";
-    char *noHome = "";
+    //char *home = "~";
+    //char *noHome = "";
+    char *color;
 
     if(!isatty(STDIN_FILENO)) {
         // If your shell is reading from a piped file
@@ -59,11 +62,27 @@ int main(int argc, char *argv[], char* envp[]) {
         getcwd(cwd, sizeof(cwd));
         char *prompt = calloc(strlen(cwd) + 10, sizeof(char));
         if (strstr(cwd, getenv("HOME")) != NULL) {
-            strcat(prompt, home);
+            if (strcmp(color, "RED") == 0) strcat(prompt, RED "~");
+            else if (strcmp(color, "GRN") == 0) strcat(prompt, GRN "~");
+            else if (strcmp(color, "YEL") == 0) strcat(prompt, YEL "~");
+            else if (strcmp(color, "BLU") == 0) strcat(prompt, BLU "~");
+            else if (strcmp(color, "MAG") == 0) strcat(prompt, MAG "~");
+            else if (strcmp(color, "CYN") == 0) strcat(prompt, CYN "~");
+            else if (strcmp(color, "WHT") == 0) strcat(prompt, WHT "~");
+            else if (strcmp(color, "BWN") == 0) strcat(prompt, BWN "~");
+            else strcat(prompt, "~");
             strcat(prompt, cwd + strlen(getenv("HOME")));
             strcat(prompt, " :: kencao >> " RESET);
         } else {
-            strcat(prompt, noHome);
+            if (strcmp(color, "RED") == 0) strcat(prompt, RED "");
+            else if (strcmp(color, "GRN") == 0) strcat(prompt, GRN "");
+            else if (strcmp(color, "YEL") == 0) strcat(prompt, YEL "");
+            else if (strcmp(color, "BLU") == 0) strcat(prompt, BLU "");
+            else if (strcmp(color, "MAG") == 0) strcat(prompt, MAG "");
+            else if (strcmp(color, "CYN") == 0) strcat(prompt, CYN "");
+            else if (strcmp(color, "WHT") == 0) strcat(prompt, WHT "");
+            else if (strcmp(color, "BWN") == 0) strcat(prompt, BWN "");
+            else strcat(prompt, "");
             strcat(prompt, cwd);
             strcat(prompt, " :: kencao >> " RESET);
         }
@@ -118,50 +137,39 @@ pwd                   Prints the absolute path of the current working directory"
                 printf("Child %d exited with status %d\n", wpid, WEXITSTATUS(childStatus));
             }*/
         }
-        /*else if (strstr(input, "color") == input) {
-            //free(home);
-            //free(noHome);
+        else if (strstr(input, "color") == input) {
             if (strcmp(argv[1], "RED") == 0) {
-                home = RED "~";
-                noHome = RED "";
+                color = "RED";
             }
             else if (strcmp(argv[1], "GRN") == 0) {
-                home = GRN "~";
-                noHome = GRN "";
+                color = "GRN";
             }
             else if (strcmp(argv[1], "YEL") == 0) {
-                home = YEL "~";
-                noHome = YEL "";
+                color = "YEL";
             }
             else if (strcmp(argv[1], "BLU") == 0) {
-                home = BLU "~";
-                noHome = BLU "";
+                color = "BLU";
             }
             else if (strcmp(argv[1], "MAG") == 0) {
-                home = MAG "~";
-                noHome = MAG "";
+                color = "MAG";
             }
             else if (strcmp(argv[1], "CYN") == 0) {
-                home = CYN "~";
-                noHome = CYN "";
+                color = "CYN";
             }
             else if (strcmp(argv[1], "WHT") == 0) {
-                home = WHT "~";
-                noHome = WHT "";
+                color = "WHT";
             }
             else if (strcmp(argv[1], "BWN") == 0) {
-                home = BWN "~";
-                noHome = BWN "";
+                color = "BWN";
             }
             else {
-                home = RESET "~";
-                noHome = RESET "";
+                color = "RESET";
             }
             free(prompt);
             free(input);
             continue;
 
-        }*/
+        }
         else if (strstr(input, "exit") == input) break;
         else if (strstr(input, "pwd") == input) {
             pid_t pid;
@@ -210,7 +218,7 @@ pwd                   Prints the absolute path of the current working directory"
                 sigset_t mask, prev;
                 signal(SIGCHLD, sigchld_handler);
                 signal(SIGINT, sigint_handler);
-                signal(SIGTSTP, sigstp_handler);
+                signal(SIGTSTP, sigtstp_handler);
                 sigemptyset(&mask);
                 sigaddset(&mask, SIGCHLD);
                 pid_t pid;
@@ -219,7 +227,7 @@ pwd                   Prints the absolute path of the current working directory"
                     sigset_t mask, prev;
                     signal(SIGCHLD, sigchld_handler);
                     signal(SIGINT, sigint_handler);
-                    signal(SIGTSTP, sigstp_handler);
+                    signal(SIGTSTP, sigtstp_handler);
                     sigemptyset(&mask);
                     sigaddset(&mask, SIGCHLD);
                     int pipeEnds1[2];
@@ -271,13 +279,14 @@ pwd                   Prints the absolute path of the current working directory"
                 sigset_t mask, prev;
                 signal(SIGCHLD, sigchld_handler);
                 signal(SIGINT, sigint_handler);
-                signal(SIGTSTP, sigstp_handler);
+                signal(SIGTSTP, sigtstp_handler);
                 sigemptyset(&mask);
                 sigaddset(&mask, SIGCHLD);
                 pid_t pid;
                 int childStatus;
                 sigprocmask(SIG_BLOCK, &mask, &prev);
                 if ((pid = fork()) == 0) {
+                    printf("CHILD PID = %d\n", getpid());
                     for (int i = 0; i < count; i++) {
                         if (strcmp(argv[i], "<") == 0) {
                             int fd;
@@ -313,6 +322,7 @@ pwd                   Prints the absolute path of the current working directory"
                         exit(EXIT_FAILURE);
                     }
                 }
+                childPID = pid;
                 while(!pid)
                     sigsuspend(&prev);
 
