@@ -24,27 +24,24 @@
 
 int parseLine(char *buf, char **argv);
 
-
+volatile sig_atomic_t pid;
 void sigchld_handler(int s) {
-    waitpid(-1, NULL, 0);
 }
 
-void sigint_handler(int s) {
+void sigint_handler(int s){
 }
 
-pid_t childPID = (pid_t) -1;
+//volatile pid_t childPID = (pid_t) -1;
 void sigtstp_handler(int s) {
-    kill(childPID, SIGSTOP);
-    kill(getpid(), SIGCONT);
 }
 
 int main(int argc, char *argv[], char* envp[]) {
-    //char* colors[] = {"\x1B[0m", "\x1B[31m", "\x1B[32m", "\x1B[33m", "\x1B[34m", "\x1B[35m", "\x1B[36m", "\x1B[37m"};
+    signal(SIGCHLD, sigchld_handler);
+    signal(SIGINT, sigint_handler);
+    signal(SIGTSTP, sigtstp_handler);
     char *input;
     bool exited = false;
-    //char *home = "~";
-    //char *noHome = "";
-    char *color;
+    char *color = "";
 
     if(!isatty(STDIN_FILENO)) {
         // If your shell is reading from a piped file
@@ -107,7 +104,7 @@ int main(int argc, char *argv[], char* envp[]) {
 
         // If EOF is read (aka ^D) readline returns NULL
         if (strstr(input, "help") == input) {
-            pid_t pid;
+            //pid_t pid;
             if (count == 1) {
                 if ((pid = fork()) == 0){
                     HELP();
@@ -172,7 +169,7 @@ pwd                   Prints the absolute path of the current working directory"
         }
         else if (strstr(input, "exit") == input) break;
         else if (strstr(input, "pwd") == input) {
-            pid_t pid;
+            //pid_t pid;
             int childStatus;
             if (count == 1) {
                 if ((pid = fork()) == 0) {
@@ -213,25 +210,26 @@ pwd                   Prints the absolute path of the current working directory"
                 chdir(input + 3);
             }
         }
+        else if (strstr(input, "kill") == input) {
+            int killPID;
+            killPID = atoi(argv[1]);
+            kill(killPID, SIGKILL);
+        }
         else {
             if (pipeCounter != 0) {
                 sigset_t mask, prev;
-                signal(SIGCHLD, sigchld_handler);
-                signal(SIGINT, sigint_handler);
-                signal(SIGTSTP, sigtstp_handler);
+                //signal(SIGTSTP, sigtstp_handler);
                 sigemptyset(&mask);
                 sigaddset(&mask, SIGCHLD);
-                pid_t pid;
+                //pid_t pid;
                 sigprocmask(SIG_BLOCK, &mask, &prev);
                 if ((pid = fork()) == 0) {
                     sigset_t mask, prev;
-                    signal(SIGCHLD, sigchld_handler);
-                    signal(SIGINT, sigint_handler);
-                    signal(SIGTSTP, sigtstp_handler);
+                    //signal(SIGTSTP, sigtstp_handler);
                     sigemptyset(&mask);
                     sigaddset(&mask, SIGCHLD);
                     int pipeEnds1[2];
-                    pid_t pid[2];
+                    pid_t pid[pipeCounter + 1];
                     pipe(pipeEnds1);
                     for (int i = 0; i < pipeCounter + 1; i++) {
                         sigprocmask(SIG_BLOCK, &mask, &prev);
@@ -262,31 +260,26 @@ pwd                   Prints the absolute path of the current working directory"
                         close(pipeEnds1[0]);
                     }
                     for (int i = 0; i < pipeCounter + 1; i++) {
-                        while(!pid[i])
-                            sigsuspend(&prev);
-                        sigprocmask(SIG_UNBLOCK, &prev, NULL);
-                    }
-                    for (int i = 0; i < pipeCounter + 1; i++) {
                         waitpid(pid[i], NULL, 0);
                     }
                     exit(0);
                 }
+                pid = 0;
                 while (!pid)
                     sigsuspend(&prev);
-                sigprocmask(SIG_UNBLOCK, &prev, NULL);
+                sigprocmask(SIG_UNBLOCK, &mask, NULL);
                 wait(NULL);
             } else {
                 sigset_t mask, prev;
-                signal(SIGCHLD, sigchld_handler);
-                signal(SIGINT, sigint_handler);
-                signal(SIGTSTP, sigtstp_handler);
+
                 sigemptyset(&mask);
                 sigaddset(&mask, SIGCHLD);
-                pid_t pid;
+                //pid_t pid;
                 int childStatus;
                 sigprocmask(SIG_BLOCK, &mask, &prev);
                 if ((pid = fork()) == 0) {
-                    printf("CHILD PID = %d\n", getpid());
+                    //sigprocmask(SIG_UNBLOCK, &mask, NULL);
+                    signal(SIGTSTP, SIG_DFL);
                     for (int i = 0; i < count; i++) {
                         if (strcmp(argv[i], "<") == 0) {
                             int fd;
@@ -322,12 +315,18 @@ pwd                   Prints the absolute path of the current working directory"
                         exit(EXIT_FAILURE);
                     }
                 }
-                childPID = pid;
-                while(!pid)
-                    sigsuspend(&prev);
+                //sigprocmask(SIG_UNBLOCK, &prev, NULL);
+                //childPID = pid;
 
-                sigprocmask(SIG_UNBLOCK, &prev, NULL);
-                waitpid(pid, &childStatus, 0);
+                waitpid(pid, &childStatus, WUNTRACED);
+                //setpgid(pid, pid);
+                //tcsetpgrp(STDIN_FILENO, pid);
+                //pid = 0;
+                //while(!pid){
+                    sigsuspend(&prev);
+                //}
+
+                sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
             }
         }
@@ -343,9 +342,6 @@ pwd                   Prints the absolute path of the current working directory"
         free(prompt);
         rl_free(input);
     } while(!exited);
-
-    //free(home);
-    //free(noHome);
 
     debug("%s", "user entered 'exit'");
 
@@ -381,7 +377,7 @@ int parseLine(char *buf, char **argv) {
         } else {
 
             for (int i = 0; i < strlen(buf); i++) {
-                /*if ((buf[i] == '<' || buf[i] == '>' || buf[i] == '|') && i == 0) {
+                if ((buf[i] == '<' || buf[i] == '>' || buf[i] == '|') && i == 0) {
                     delim = strchr(buf, buf[i]);
                     argv[argc++] = buf;
                     delim++;
@@ -390,8 +386,8 @@ int parseLine(char *buf, char **argv) {
                     while (*buf && (*buf == ' '))
                         buf++;
                     break;
-                }*/
-                if (buf[i] == '<' || buf[i] == '>' || buf[i] == '|') {
+                }
+                else if (buf[i] == '<' || buf[i] == '>' || buf[i] == '|') {
                     delim = strchr(buf, buf[i]);
                     argv[argc++] = buf;
                     delim--;
