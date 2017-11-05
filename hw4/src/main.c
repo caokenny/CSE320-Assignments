@@ -22,6 +22,36 @@
 #include "sfish.h"
 #include "debug.h"
 
+typedef struct {
+    int *array;
+    size_t used;
+    size_t size;
+} Joblist;
+
+Joblist jobs;
+char jobNames[1024][30];
+char *nameOfJob;
+
+void initArray(Joblist *jobs, size_t initialSize) {
+    jobs->array = (int*)malloc(initialSize * sizeof(int));
+    jobs->used = 0;
+    jobs->size = initialSize;
+}
+
+void insertElement(Joblist *jobs, int element) {
+    if (jobs->used == jobs->size) {
+        jobs->size *= 2;
+        jobs->array = (int*)realloc(jobs->array, jobs->size * sizeof(int));
+    }
+    jobs->array[jobs->used++] = element;
+}
+
+void freeArray(Joblist *jobs) {
+    free(jobs->array);
+    jobs->array = NULL;
+    jobs->used = jobs->size = 0;
+}
+
 int parseLine(char *buf, char **argv);
 
 volatile sig_atomic_t pid;
@@ -31,11 +61,15 @@ void sigchld_handler(int s) {
 void sigint_handler(int s){
 }
 
-//volatile pid_t childPID = (pid_t) -1;
+volatile pid_t childPID = (pid_t) -1;
 void sigtstp_handler(int s) {
+    printf("SIGTSTP CAUGHT\n");
+    insertElement(&jobs, (int)childPID);
+    strcpy(jobNames[jobs.used-1], nameOfJob);
 }
 
 int main(int argc, char *argv[], char* envp[]) {
+    initArray(&jobs, 1);
     signal(SIGCHLD, sigchld_handler);
     signal(SIGINT, sigint_handler);
     signal(SIGTSTP, sigtstp_handler);
@@ -97,6 +131,8 @@ int main(int argc, char *argv[], char* envp[]) {
         for (int i = 0; i < count; i++) {
             if (strcmp(argv[i], "|") == 0) pipeCounter++;
         }
+        //printf("%s\n", argv[1]++);
+
         //write(1, "\e[s", strlen("\e[s"));
         //write(1, "\e[20;10H", strlen("\e[20;10H"));
         //write(1, "SomeText", strlen("SomeText"));
@@ -211,9 +247,24 @@ pwd                   Prints the absolute path of the current working directory"
             }
         }
         else if (strstr(input, "kill") == input) {
-            int killPID;
-            killPID = atoi(argv[1]);
-            kill(killPID, SIGKILL);
+            if (strchr(argv[1], '%') != NULL) {
+                char *buf = argv[1];
+                buf++;
+                int killPID = atoi(buf);
+                killPID = jobs.array[killPID];
+                kill(killPID, SIGKILL);
+                waitpid(killPID, NULL, 0);
+            } else {
+                int killPID;
+                killPID = atoi(argv[1]);
+                kill(killPID, SIGKILL);
+                waitpid(killPID, NULL, 0);
+            }
+        }
+        else if (strstr(input, "jobs") == input) {
+            for (int i = 0; i < jobs.size; i++) {
+                printf(JOBS_LIST_ITEM, i, jobNames[i]);
+            }
         }
         else {
             if (pipeCounter != 0) {
@@ -271,7 +322,6 @@ pwd                   Prints the absolute path of the current working directory"
                 wait(NULL);
             } else {
                 sigset_t mask, prev;
-
                 sigemptyset(&mask);
                 sigaddset(&mask, SIGCHLD);
                 //pid_t pid;
@@ -316,7 +366,8 @@ pwd                   Prints the absolute path of the current working directory"
                     }
                 }
                 //sigprocmask(SIG_UNBLOCK, &prev, NULL);
-                //childPID = pid;
+                childPID = pid;
+                nameOfJob = argv[0];
 
                 waitpid(pid, &childStatus, WUNTRACED);
                 //setpgid(pid, pid);
@@ -344,6 +395,8 @@ pwd                   Prints the absolute path of the current working directory"
     } while(!exited);
 
     debug("%s", "user entered 'exit'");
+
+    freeArray(&jobs);
 
     return EXIT_SUCCESS;
 }
