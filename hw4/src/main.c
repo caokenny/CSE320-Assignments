@@ -52,7 +52,7 @@ void freeArray(Joblist *jobs) {
     jobs->used = jobs->size = 0;
 }
 
-int parseLine(char *buf, char **argv);
+int parseLine(char *buf, char **argv, char *buf2, char *buf3, char *buf4);
 
 volatile sig_atomic_t pid;
 void sigchld_handler(int s) {
@@ -127,7 +127,8 @@ int main(int argc, char *argv[], char* envp[]) {
         if (getenv("PPATH") == NULL) {
             setenv("PPATH", cwd, 1);
         }
-        int count = parseLine(input, argv);
+        char *buf2 = NULL, *buf3 = NULL, *buf4 = NULL;
+        int count = parseLine(input, argv, buf2, buf3, buf4);
         int pipeCounter = 0;
         for (int i = 0; i < count; i++) {
             if (strcmp(argv[i], "|") == 0) pipeCounter++;
@@ -387,6 +388,10 @@ pwd                   Prints the absolute path of the current working directory"
         // Readline mallocs the space for input. You must free it.
         free(prompt);
         rl_free(input);
+
+        if (buf2 != NULL) free(buf2);
+        if (buf3 != NULL) free(buf3);
+        if (buf4 != NULL) free(buf4);
     } while(!exited);
 
     debug("%s", "user entered 'exit'");
@@ -396,7 +401,7 @@ pwd                   Prints the absolute path of the current working directory"
     return EXIT_SUCCESS;
 }
 
-int parseLine(char *buf, char **argv) {
+int parseLine(char *buf, char **argv, char *buf2, char *buf3, char *buf4) {
     char *delim;
     int argc;
     int bg;
@@ -426,31 +431,63 @@ int parseLine(char *buf, char **argv) {
 
             for (int i = 0; i < strlen(buf); i++) {
                 if ((buf[i] == '<' || buf[i] == '>' || buf[i] == '|') && i == 0) {
-                    delim = strchr(buf, buf[i]);
-                    argv[argc++] = buf;
-                    delim++;
-                    *delim = '\0';
-                    buf = delim + 1;
-                    while (*buf && (*buf == ' '))
+                    if (*(buf + 1) != ' ') {
+                        buf2 = (char*)malloc(strlen(buf) + 1);
+                        strcpy(buf2, buf);
+                        delim = strchr(buf2, buf[i]);
+                        argv[argc++] = buf2;
+                        delim++;
+                        *delim = '\0';
                         buf++;
-                    break;
+                        while(*buf && (*buf == ' '))
+                            buf++;
+                        break;
+                    } else {
+                        delim = strchr(buf, buf[i]);
+                        argv[argc++] = buf;
+                        delim++;
+                        *delim = '\0';
+                        buf = delim + 1;
+                        while (*buf && (*buf == ' '))
+                            buf++;
+                        break;
+                    }
                 }
                 else if (buf[i] == '<' || buf[i] == '>' || buf[i] == '|') {
                     delim = strchr(buf, buf[i]);
-                    argv[argc++] = buf;
-                    delim--;
-                    *delim = '\0';
-                    buf = delim + 1;
-                    while (*buf && (*buf == ' '))
+                    if (*(delim - 1) != ' ') {
+                        buf3 = (char*)malloc(strlen(buf) + 1);
+                        strcpy(buf3, buf);
+                        delim = strchr(buf3, buf[i]);
+                        argv[argc++] = buf3;
+                        *delim = '\0';
+                        delim = strchr(buf, buf[i]);
+                        buf = delim;
+                        while (*buf && (*buf == ' '))
+                            buf++;
+                    } else {
+                        argv[argc++] = buf;
+                        delim--;
+                        *delim = '\0';
+                        buf = delim + 1;
+                        while (*buf && (*buf == ' '))
+                            buf++;
+                    }
+                    if (*(buf + 1) != ' ') {
+                        buf4 = (char*)malloc(strlen(buf) + 1);
+                        strcpy(buf4, buf);
+                        argv[argc++] = buf4;
+                        *(buf4 + 1) = '\0';
                         buf++;
-                    /*char direction[2];
-                    direction[0] = buf[0];
-                    direction[1] = '\0';*/
-                    argv[argc++] = buf;
-                    *(buf + 1) = '\0';
-                    buf += 2;
-                    while (*buf && (*buf == ' '))
-                        buf++;
+                        while (*buf && (*buf == ' '))
+                            buf++;
+                    } else {
+                        argv[argc++] = buf;
+                        *(buf + 1) = '\0';
+                        buf += 2;
+                        while (*buf && (*buf == ' '))
+                            buf++;
+                    }
                     delim = strchr(buf, ' ');
                     argv[argc++] = buf;
                     *delim = '\0';
