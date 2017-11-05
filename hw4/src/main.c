@@ -56,6 +56,7 @@ int parseLine(char *buf, char **argv);
 
 volatile sig_atomic_t pid;
 void sigchld_handler(int s) {
+    printf("SIGCHLD CAUGHT\n");
 }
 
 void sigint_handler(int s){
@@ -205,7 +206,6 @@ pwd                   Prints the absolute path of the current working directory"
         }
         else if (strstr(input, "exit") == input) break;
         else if (strstr(input, "pwd") == input) {
-            //pid_t pid;
             int childStatus;
             if (count == 1) {
                 if ((pid = fork()) == 0) {
@@ -266,17 +266,22 @@ pwd                   Prints the absolute path of the current working directory"
                 printf(JOBS_LIST_ITEM, i, jobNames[i]);
             }
         }
+        else if (strstr(input, "fg") == input) {
+            char *buf = argv[1];
+            buf++;
+            int contPID = atoi(buf);
+            contPID = jobs.array[contPID];
+            kill(contPID, SIGCONT);
+        }
         else {
             if (pipeCounter != 0) {
                 sigset_t mask, prev;
-                //signal(SIGTSTP, sigtstp_handler);
                 sigemptyset(&mask);
                 sigaddset(&mask, SIGCHLD);
-                //pid_t pid;
                 sigprocmask(SIG_BLOCK, &mask, &prev);
+                int childStatus;
                 if ((pid = fork()) == 0) {
                     sigset_t mask, prev;
-                    //signal(SIGTSTP, sigtstp_handler);
                     sigemptyset(&mask);
                     sigaddset(&mask, SIGCHLD);
                     int pipeEnds1[2];
@@ -315,20 +320,16 @@ pwd                   Prints the absolute path of the current working directory"
                     }
                     exit(0);
                 }
-                pid = 0;
-                while (!pid)
-                    sigsuspend(&prev);
+                waitpid(pid, &childStatus, 0);
+                sigsuspend(&prev);
                 sigprocmask(SIG_UNBLOCK, &mask, NULL);
-                wait(NULL);
             } else {
                 sigset_t mask, prev;
                 sigemptyset(&mask);
                 sigaddset(&mask, SIGCHLD);
-                //pid_t pid;
                 int childStatus;
                 sigprocmask(SIG_BLOCK, &mask, &prev);
                 if ((pid = fork()) == 0) {
-                    //sigprocmask(SIG_UNBLOCK, &mask, NULL);
                     signal(SIGTSTP, SIG_DFL);
                     for (int i = 0; i < count; i++) {
                         if (strcmp(argv[i], "<") == 0) {
@@ -365,17 +366,11 @@ pwd                   Prints the absolute path of the current working directory"
                         exit(EXIT_FAILURE);
                     }
                 }
-                //sigprocmask(SIG_UNBLOCK, &prev, NULL);
                 childPID = pid;
                 nameOfJob = argv[0];
 
                 waitpid(pid, &childStatus, WUNTRACED);
-                //setpgid(pid, pid);
-                //tcsetpgrp(STDIN_FILENO, pid);
-                //pid = 0;
-                //while(!pid){
-                    sigsuspend(&prev);
-                //}
+                sigsuspend(&prev);
 
                 sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
