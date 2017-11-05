@@ -56,7 +56,6 @@ int parseLine(char *buf, char **argv, char *buf2, char *buf3, char *buf4);
 
 volatile sig_atomic_t pid;
 void sigchld_handler(int s) {
-    printf("SIGCHLD CAUGHT\n");
 }
 
 void sigint_handler(int s){
@@ -64,7 +63,6 @@ void sigint_handler(int s){
 
 volatile pid_t childPID = (pid_t) -1;
 void sigtstp_handler(int s) {
-    printf("SIGTSTP CAUGHT\n");
     insertElement(&jobs, (int)childPID);
     strcpy(jobNames[jobs.used-1], nameOfJob);
 }
@@ -142,7 +140,6 @@ int main(int argc, char *argv[], char* envp[]) {
 
         // If EOF is read (aka ^D) readline returns NULL
         if (strstr(input, "help") == input) {
-            //pid_t pid;
             if (count == 1) {
                 if ((pid = fork()) == 0){
                     HELP();
@@ -167,10 +164,6 @@ pwd                   Prints the absolute path of the current working directory"
                 }
             }
             waitpid(pid, NULL, 0);
-            /*int wpid = waitpid(pid, &childStatus, 0);
-            if (WIFEXITED(childStatus)) {
-                printf("Child %d exited with status %d\n", wpid, WEXITSTATUS(childStatus));
-            }*/
         }
         else if (strstr(input, "color") == input) {
             if (strcmp(argv[1], "RED") == 0) {
@@ -224,10 +217,6 @@ pwd                   Prints the absolute path of the current working directory"
                 }
             }
             waitpid(pid, &childStatus, 0);
-            //int wpid = waitpid(pid, &childStatus, 0);
-            /*if (WIFEXITED(childStatus)) {
-                printf("Child %d exited with status %d\n", wpid, WEXITSTATUS(childStatus));
-            }*/
         }
         else if (strstr(input, "cd") == input) {
             if (count == 1) {
@@ -243,8 +232,12 @@ pwd                   Prints the absolute path of the current working directory"
                 setenv("PPATH", cwd, 1);
             }
             else {
+                char *delim;
+                if ((delim = strchr(argv[1], ' ')) != NULL) {
+                    *delim = '\0';
+                }
                 setenv("PPATH", cwd, 1);
-                chdir(input + 3);
+                chdir(argv[1]);
             }
         }
         else if (strstr(input, "kill") == input) {
@@ -308,7 +301,7 @@ pwd                   Prints the absolute path of the current working directory"
                                 }
                             }
                             if (execvp(argv[0], argv) < 0) {
-                                printf(EXEC_NOT_FOUND, argv[0]);
+                                printf("sfish exec error: %s: command not found\n", argv[0]);
                                 exit(EXIT_FAILURE);
                             }
                         }
@@ -362,9 +355,17 @@ pwd                   Prints the absolute path of the current working directory"
                             break;
                         }
                     }
-                    if (execvp(argv[0], argv)) {
-                        printf(EXEC_NOT_FOUND, argv[0]);
-                        exit(EXIT_FAILURE);
+                    int redirectionCount = 0;
+                    for (int i = 0; i < count; i++) {
+                        if (strcmp(argv[i], "<") == 0 || strcmp(argv[i], ">") == 0)
+                            redirectionCount++;
+                    }
+                    if (redirectionCount > 2) printf(SYNTAX_ERROR, "sequence of redirects not supported");
+                    else {
+                        if (execvp(argv[0], argv)) {
+                            printf(EXEC_NOT_FOUND, argv[0]);
+                            exit(EXIT_FAILURE);
+                        }
                     }
                 }
                 childPID = pid;
@@ -377,13 +378,6 @@ pwd                   Prints the absolute path of the current working directory"
 
             }
         }
-
-
-        // Currently nothing is implemented
-        //printf(EXEC_NOT_FOUND, input);
-
-        // You should change exit to a "builtin" for your hw.
-        //exited = strcmp(input, "exit") == 0;
 
         // Readline mallocs the space for input. You must free it.
         free(prompt);
