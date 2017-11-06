@@ -289,7 +289,8 @@ pwd                   Prints the absolute path of the current working directory"
                             close(pipeEnds1[0]);
                             if (i != 0) {
                                 int k = i + 1;
-                                while (k%3 != 0) k++;
+                                while (strcmp(argv[k], "|") != 0) k++;
+                                k++;
                                 argv[0] = argv[k];
                                 argv[1] = argv[k + 1];
                                 for (int j = 2; j < count; j++) {
@@ -297,7 +298,15 @@ pwd                   Prints the absolute path of the current working directory"
                                 }
                             } else {
                                 for (int j = 2; j < count; j++) {
-                                    argv[j] = 0;
+                                    if (strcmp(argv[j], "|") == 0) {
+                                        argv[j] = 0;
+                                        j++;
+                                        while (argv[j] != NULL) {
+                                            argv[j] = 0;
+                                            j++;
+                                        }
+                                        break;
+                                    }
                                 }
                             }
                             if (execvp(argv[0], argv) < 0) {
@@ -336,7 +345,8 @@ pwd                   Prints the absolute path of the current working directory"
                                     fd2 = open(argv[j + 1], O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
                                     dup2(fd2, 1);
                                 }
-                                argv[j] = 0;
+                                if (strchr(argv[j], '-') == NULL)
+                                    argv[j] = 0;
                             }
                             break;
                         }
@@ -350,13 +360,14 @@ pwd                   Prints the absolute path of the current working directory"
                                     fd2 = open(argv[j + 1], O_RDONLY);
                                     dup2(fd2, 0);
                                 }
-                                argv[j] = 0;
+                                if (strchr(argv[j], '-') == NULL)
+                                    argv[j] = 0;
                             }
                             break;
                         }
                     }
                     int redirectionCount = 0;
-                    for (int i = 0; i < count; i++) {
+                    for (int i = 0; i < count - 2; i++) {
                         if (strcmp(argv[i], "<") == 0 || strcmp(argv[i], ">") == 0)
                             redirectionCount++;
                     }
@@ -421,7 +432,16 @@ int parseLine(char *buf, char **argv, char *buf2, char *buf3, char *buf4) {
             buf = delim + 1;
             while (*buf && (*buf == ' '))
                 buf++;
-        } else {
+        }
+        else if (buf[0] == '-') {
+            delim = strchr(buf, ' ');
+            argv[argc++] = buf;
+            *delim = '\0';
+            buf = delim + 1;
+            while (*buf && (*buf == ' '))
+                buf++;
+        }
+        else {
 
             for (int i = 0; i < strlen(buf); i++) {
                 if ((buf[i] == '<' || buf[i] == '>' || buf[i] == '|') && i == 0) {
@@ -495,9 +515,18 @@ int parseLine(char *buf, char **argv, char *buf2, char *buf3, char *buf4) {
             if (delim == NULL) delim = strchr(buf, '<');
             if (delim == NULL) delim = strchr(buf, '|');
             if (delim == NULL) {
-                buf[strlen(buf) - 1] = '\0';
-                argv[argc++] = buf;
-                buf += strlen(buf);
+                delim = strchr(buf, ' ');
+                if (*(delim + 1) == '\0') {
+                    buf[strlen(buf) - 1] = '\0';
+                    argv[argc++] = buf;
+                    buf += strlen(buf);
+                } else {
+                    argv[argc++] = buf;
+                    *delim = '\0';
+                    buf = delim + 1;
+                    while (*buf && (*buf == ' '))
+                        buf++;
+                }
             } else {
                 argv[argc++] = buf;
                 *delim = '\0';
