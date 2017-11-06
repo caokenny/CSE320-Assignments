@@ -288,6 +288,7 @@ pwd                   Prints the absolute path of the current working directory"
                 sigprocmask(SIG_BLOCK, &mask, &prev);
                 int childStatus;
                 if ((pid = fork()) == 0) {
+                    signal(SIGTSTP, SIG_DFL);
                     sigset_t mask, prev;
                     sigemptyset(&mask);
                     sigaddset(&mask, SIGCHLD);
