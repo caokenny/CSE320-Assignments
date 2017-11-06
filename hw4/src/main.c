@@ -72,6 +72,11 @@ int main(int argc, char *argv[], char* envp[]) {
     signal(SIGCHLD, sigchld_handler);
     signal(SIGINT, sigint_handler);
     signal(SIGTSTP, sigtstp_handler);
+    sigset_t mask, prev;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGTSTP);
+    sigaddset(&mask, SIGINT);
+    sigprocmask(SIG_BLOCK, &mask, &prev);
     char *input;
     bool exited = false;
     char *color = "";
