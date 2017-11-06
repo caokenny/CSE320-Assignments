@@ -72,11 +72,11 @@ int main(int argc, char *argv[], char* envp[]) {
     signal(SIGCHLD, sigchld_handler);
     signal(SIGINT, sigint_handler);
     signal(SIGTSTP, sigtstp_handler);
-    sigset_t mask, prev;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGTSTP);
-    sigaddset(&mask, SIGINT);
-    sigprocmask(SIG_BLOCK, &mask, &prev);
+    sigset_t shellMask, shellPrev;
+    sigemptyset(&shellMask);
+    sigaddset(&shellMask, SIGTSTP);
+    sigaddset(&shellMask, SIGINT);
+    sigprocmask(SIG_BLOCK, &shellMask, &shellPrev);
     char *input;
     bool exited = false;
     char *color = "";
@@ -286,6 +286,7 @@ pwd                   Prints the absolute path of the current working directory"
                 sigemptyset(&mask);
                 sigaddset(&mask, SIGCHLD);
                 sigprocmask(SIG_BLOCK, &mask, &prev);
+                sigprocmask(SIG_UNBLOCK, &shellMask, NULL);
                 int childStatus;
                 if ((pid = fork()) == 0) {
                     signal(SIGTSTP, SIG_DFL);
@@ -340,12 +341,14 @@ pwd                   Prints the absolute path of the current working directory"
                 waitpid(pid, &childStatus, 0);
                 sigsuspend(&prev);
                 sigprocmask(SIG_UNBLOCK, &mask, NULL);
+                sigprocmask(SIG_BLOCK, &shellMask, &shellPrev);
             } else {
                 sigset_t mask, prev;
                 sigemptyset(&mask);
                 sigaddset(&mask, SIGCHLD);
                 int childStatus;
                 sigprocmask(SIG_BLOCK, &mask, &prev);
+                sigprocmask(SIG_UNBLOCK, &shellMask, NULL);
                 if ((pid = fork()) == 0) {
                     signal(SIGTSTP, SIG_DFL);
                     for (int i = 0; i < count; i++) {
@@ -400,6 +403,7 @@ pwd                   Prints the absolute path of the current working directory"
                 sigsuspend(&prev);
 
                 sigprocmask(SIG_UNBLOCK, &mask, NULL);
+                sigprocmask(SIG_BLOCK, &shellMask, &shellPrev);
 
             }
         }
