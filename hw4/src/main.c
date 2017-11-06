@@ -246,6 +246,11 @@ pwd                   Prints the absolute path of the current working directory"
             }
         }
         else if (strstr(input, "kill") == input) {
+            if (argv[1] == NULL) {
+                free(prompt);
+                free(input);
+                continue;
+            }
             if (strchr(argv[1], '%') != NULL) {
                 char *buf = argv[1];
                 buf++;
@@ -274,6 +279,11 @@ pwd                   Prints the absolute path of the current working directory"
             }
         }
         else if (strstr(input, "fg") == input) {
+            if (argv[1] == NULL) {
+                free(prompt);
+                free(input);
+                continue;
+            }
             char *buf = argv[1];
             buf++;
             int contPID = atoi(buf);
