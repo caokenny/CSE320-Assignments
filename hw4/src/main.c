@@ -255,6 +255,11 @@ pwd                   Prints the absolute path of the current working directory"
                 killPID = atoi(argv[1]);
                 kill(killPID, SIGKILL);
                 waitpid(killPID, NULL, 0);
+                for (int i = 0; i < jobs.size; i++) {
+                    if (jobs.array[i] == killPID) {
+                        jobs.array[i] = 0;
+                    }
+                }
             }
         }
         else if (strstr(input, "jobs") == input) {
