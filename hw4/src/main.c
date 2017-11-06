@@ -245,9 +245,11 @@ pwd                   Prints the absolute path of the current working directory"
                 char *buf = argv[1];
                 buf++;
                 int killPID = atoi(buf);
+                int jobID = killPID;
                 killPID = jobs.array[killPID];
                 kill(killPID, SIGKILL);
                 waitpid(killPID, NULL, 0);
+                jobs.array[jobID] = 0;
             } else {
                 int killPID;
                 killPID = atoi(argv[1]);
@@ -257,7 +259,8 @@ pwd                   Prints the absolute path of the current working directory"
         }
         else if (strstr(input, "jobs") == input) {
             for (int i = 0; i < jobs.size; i++) {
-                printf(JOBS_LIST_ITEM, i, jobNames[i]);
+                if (jobs.array[i] != 0)
+                    printf(JOBS_LIST_ITEM, i, jobNames[i]);
             }
         }
         else if (strstr(input, "fg") == input) {
