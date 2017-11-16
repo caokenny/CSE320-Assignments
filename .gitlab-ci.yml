@@ -2,7 +2,11 @@ image: gcc:5.4.0
 variables:
     GIT_SSL_NO_VERIFY: "true"
     CRITERIONLINK: https://github.com/Snaipe/Criterion/releases/download/v2.3.2/criterion-v2.3.2-linux-x86_64.tar.bz2
+<<<<<<< HEAD
     HW_DIR: hw4
+=======
+    HW_DIR: hw5
+>>>>>>> HW5_CODE/master
 before_script:
     - apt-get update &>/dev/null
     - apt-get install -y curl make gcc bzip2 &>/dev/null
@@ -13,7 +17,11 @@ before_script:
     - cp /tmp/criterion-v2.3.2/lib/* /usr/lib
 stages:
     - build
+<<<<<<< HEAD
 test:
+=======
+build:
+>>>>>>> HW5_CODE/master
     stage: build
     script:
         - make clean all -C ${HW_DIR}
