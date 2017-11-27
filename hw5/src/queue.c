@@ -13,6 +13,19 @@ queue_t *create_queue(void) {
 }
 
 bool invalidate_queue(queue_t *self, item_destructor_f destroy_function) {
+    if (self == NULL) {
+        errno = EINVAL;
+        return false;
+    }
+    int size = 0;
+    sem_getvalue(&(self->items), &size);
+    queue_node_t *remove = self->front;
+    for (int i = 0; i < size; i++) {
+        destroy_function(self->front->item);
+        self->front = self->front->next;
+        free(remove);
+        remove = self->front;
+    }
     self->invalid = true;
     return false;
 }
@@ -21,6 +34,7 @@ bool enqueue(queue_t *self, void *item) {
     pthread_mutex_lock(&(self->lock));
     if (self == NULL || self->invalid == true) {
         errno = EINVAL;
+        pthread_mutex_unlock(&(self->lock));
         return false;
     }
     queue_node_t *newNode = calloc(1, sizeof(queue_node_t));
@@ -41,15 +55,20 @@ bool enqueue(queue_t *self, void *item) {
 }
 
 void *dequeue(queue_t *self) {
+    sem_wait(&(self->items));
     pthread_mutex_lock(&(self->lock));
-    if (self == NULL) {
+    if (self == NULL || self->invalid == true) {
         errno = EINVAL;
+        pthread_mutex_unlock(&(self->lock));
         return NULL;
     }
-    sem_wait(&(self->items));
     queue_node_t *remove = self->front;
     self->front = self->front->next;
     free(remove);
     pthread_mutex_unlock(&(self->lock));
     return NULL;
 }
+
+// void destroy_function(void) {
+
+// }
