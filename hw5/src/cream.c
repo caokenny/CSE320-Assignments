@@ -38,9 +38,12 @@ int main(int argc, char *argv[]) {
     global_map = create_map(10, someHash, freeMe);
     int x = 5;
     put(global_map, MAP_KEY(&x, sizeof(int)), MAP_VAL(&x, sizeof(int)), false);
-    int y = 6;
+    int y = 15;
     put(global_map, MAP_KEY(&y, sizeof(int)), MAP_VAL(&y, sizeof(int)), false);
-    map_val_t val = get(global_map, MAP_KEY(&x, sizeof(int)));
+    int z = 16;
+    put(global_map, MAP_KEY(&z, sizeof(int)), MAP_VAL(&z, sizeof(int)), false);
+    delete(global_map, MAP_KEY(&y, sizeof(int)));
+    map_val_t val = get(global_map, MAP_KEY(&z, sizeof(int)));
     printf("%d, %lu\n", *(int*)val.val_base, val.val_len);
     exit(0);
 }

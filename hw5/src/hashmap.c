@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <errno.h>
+#include <stdio.h>
 
 #define MAP_KEY(base, len) (map_key_t) {.key_base = base, .key_len = len}
 #define MAP_VAL(base, len) (map_val_t) {.val_base = base, .val_len = len}
@@ -106,10 +107,6 @@ map_val_t get(hashmap_t *self, map_key_t key) {
         pthread_mutex_lock(&(self->write_lock));
     pthread_mutex_unlock(&(self->fields_lock));
 
-    //READING
-    //HAPPENS
-    //HERE
-
     uint32_t hashTo = get_index(self, key);
     if (self->nodes[hashTo].key.key_base == key.key_base && self->nodes[hashTo].key.key_len == key.key_len) {
         returnMapVal = self->nodes[hashTo].val;
@@ -149,7 +146,44 @@ map_val_t get(hashmap_t *self, map_key_t key) {
 }
 
 map_node_t delete(hashmap_t *self, map_key_t key) {
-    return MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), false);
+    pthread_mutex_lock(&self->write_lock);
+    map_node_t returnMapNode;
+    if (self == NULL) {
+        errno = EINVAL;
+        pthread_mutex_unlock(&self->write_lock);
+        return MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), false);
+    }
+    uint32_t hashTo = get_index(self, key);
+    if (self->nodes[hashTo].key.key_base == key.key_base && self->nodes[hashTo].key.key_len == key.key_len) {
+        returnMapNode = self->nodes[hashTo];
+
+        self->nodes[hashTo].key.key_base = NULL;
+        self->nodes[hashTo].key.key_len = 0;
+
+        self->nodes[hashTo].val.val_base = NULL;
+        self->nodes[hashTo].val.val_len = 0;
+
+        self->nodes[hashTo].tombstone = true;
+    } else {
+        int index = hashTo + 1;
+        while (index != self->capacity) {
+            if (self->nodes[index].key.key_base == key.key_base && self->nodes[index].key.key_len == key.key_len) {
+                returnMapNode = self->nodes[index];
+
+                self->nodes[index].key.key_base = NULL;
+                self->nodes[index].key.key_len = 0;
+
+                self->nodes[index].val.val_base = NULL;
+                self->nodes[index].val.val_len = 0;
+
+                self->nodes[index].tombstone = true;
+                break;
+            } else index++;
+        }
+    }
+
+    pthread_mutex_unlock(&self->write_lock);
+    return returnMapNode;
 }
 
 bool clear_map(hashmap_t *self) {
