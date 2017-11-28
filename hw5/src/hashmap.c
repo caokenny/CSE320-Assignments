@@ -20,13 +20,13 @@ hashmap_t *create_map(uint32_t capacity, hash_func_f hash_function, destructor_f
     newHM->destroy_function = destroy_function;
     newHM->num_readers = 0;
     newHM->invalid = false;
-    map_node_t map_node[capacity];
+    map_node_t *map_node = (map_node_t*)calloc(capacity, sizeof(map_node_t));
     newHM->nodes = map_node;
     return newHM;
 }
 
 bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
-    pthread_mutex_lock(&(self->write_lock));
+    pthread_mutex_lock(&self->write_lock);
     if (self == NULL) {
         errno = EINVAL;
         return false;
@@ -39,7 +39,7 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
         self->nodes[hashTo].val.val_len = val.val_len;
     }
     // if index is empty insert key/val
-    else if (self->nodes[hashTo].key.key_base != NULL) {
+    else if (self->nodes[hashTo].key.key_base == NULL || self->nodes[hashTo].key.key_len == 0) {
         self->nodes[hashTo].key.key_base = key.key_base;
         self->nodes[hashTo].key.key_len = key.key_len;
 
@@ -93,12 +93,14 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
             return false;
         }
     }
+    self->size++;
     pthread_mutex_unlock(&(self->write_lock));
     return true;
 }
 
 map_val_t get(hashmap_t *self, map_key_t key) {
     pthread_mutex_lock(&(self->fields_lock));
+    map_val_t returnMapVal;
     self->num_readers++;
     if (self->num_readers == 1)
         pthread_mutex_lock(&(self->write_lock));
@@ -108,21 +110,42 @@ map_val_t get(hashmap_t *self, map_key_t key) {
     //HAPPENS
     //HERE
 
-    //get hash index using get_index()
-    //check if nodes[hashTo] is the right key
-        //if not the right key loop through till capacity
-        //if reached capacity start index from 0
-        //if reached hashTo then key is not in map
-            //then return map_val_t notInMap;
-                //notInMap.val_base = NULL && notInMap.val_len = 0;
-    //if matching key found return self->nodes[hashTo].val
+    uint32_t hashTo = get_index(self, key);
+    if (self->nodes[hashTo].key.key_base == key.key_base && self->nodes[hashTo].key.key_len == key.key_len) {
+        returnMapVal = self->nodes[hashTo].val;
+    } else {
+        int index = hashTo + 1;
+        bool found = false;
+        while (index != self->capacity) {
+            if (self->nodes[index].key.key_base == key.key_base && self->nodes[index].key.key_len == key.key_len) {
+                returnMapVal = self->nodes[index].val;
+                found = true;
+                break;
+            } else index++;
+        }
+        if (found == false) {
+            index = 0;
+            while (index != hashTo) {
+                if (self->nodes[index].key.key_base == key.key_base && self->nodes[index].key.key_len == key.key_len) {
+                    returnMapVal = self->nodes[index].val;
+                    found = true;
+                    break;
+                } else index++;
+            }
+            if (found == false) {
+                returnMapVal.val_base = NULL;
+                returnMapVal.val_len = 0;
+            }
+        }
+    }
 
     pthread_mutex_lock(&(self->fields_lock));
     self->num_readers--;
     if (self->num_readers == 0)
         pthread_mutex_unlock(&(self->write_lock));
     pthread_mutex_unlock(&(self->fields_lock));
-    return MAP_VAL(NULL, 0);
+    return returnMapVal;
+    //return MAP_VAL(NULL, 0);
 }
 
 map_node_t delete(hashmap_t *self, map_key_t key) {
