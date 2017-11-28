@@ -4,7 +4,7 @@
 
 queue_t *create_queue(void) {
     queue_t *newQueue;
-    newQueue = calloc(1, sizeof(queue_t));
+    newQueue = (queue_t*)calloc(1, sizeof(queue_t));
     if (newQueue == NULL) return NULL;
     if (pthread_mutex_init(&(newQueue->lock), NULL) != 0) return NULL;
     sem_init(&(newQueue->items), 0, 0);
@@ -13,8 +13,10 @@ queue_t *create_queue(void) {
 }
 
 bool invalidate_queue(queue_t *self, item_destructor_f destroy_function) {
-    if (self == NULL) {
+    pthread_mutex_lock(&(self->lock));
+    if (self == NULL || destroy_function == NULL) {
         errno = EINVAL;
+        pthread_mutex_unlock(&(self->lock));
         return false;
     }
     int size = 0;
@@ -27,12 +29,13 @@ bool invalidate_queue(queue_t *self, item_destructor_f destroy_function) {
         remove = self->front;
     }
     self->invalid = true;
+    pthread_mutex_unlock(&(self->lock));
     return false;
 }
 
 bool enqueue(queue_t *self, void *item) {
     pthread_mutex_lock(&(self->lock));
-    if (self == NULL || self->invalid == true) {
+    if (self == NULL || self->invalid == true || item == NULL) {
         errno = EINVAL;
         pthread_mutex_unlock(&(self->lock));
         return false;
@@ -68,7 +71,3 @@ void *dequeue(queue_t *self) {
     pthread_mutex_unlock(&(self->lock));
     return NULL;
 }
-
-// void destroy_function(void) {
-
-// }
