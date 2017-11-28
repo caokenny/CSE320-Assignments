@@ -166,6 +166,7 @@ map_node_t delete(hashmap_t *self, map_key_t key) {
         self->nodes[hashTo].tombstone = true;
     } else {
         int index = hashTo + 1;
+        bool found = false;
         while (index != self->capacity) {
             if (self->nodes[index].key.key_base == key.key_base && self->nodes[index].key.key_len == key.key_len) {
                 returnMapNode = self->nodes[index];
@@ -177,8 +178,29 @@ map_node_t delete(hashmap_t *self, map_key_t key) {
                 self->nodes[index].val.val_len = 0;
 
                 self->nodes[index].tombstone = true;
+
+                found = true;
                 break;
             } else index++;
+        }
+        if (found == false) {
+            index = 0;
+            while (index != hashTo) {
+                if (self->nodes[index].key.key_base == key.key_base && self->nodes[index].key.key_len == key.key_len) {
+                    returnMapNode = self->nodes[index];
+
+                    self->nodes[index].key.key_base = NULL;
+                    self->nodes[index].key.key_len = 0;
+
+                    self->nodes[index].val.val_base = NULL;
+                    self->nodes[index].val.val_len = 0;
+
+                    self->nodes[index].tombstone = true;
+
+                    found = true;
+                    break;
+                } else index++;
+            }
         }
     }
 
@@ -187,9 +209,30 @@ map_node_t delete(hashmap_t *self, map_key_t key) {
 }
 
 bool clear_map(hashmap_t *self) {
-	return false;
+    pthread_mutex_lock(&self->write_lock);
+    if (self == NULL) {
+        errno = EINVAL;
+        pthread_mutex_unlock(&self->write_lock);
+        return false;
+    }
+    for (int i = 0; i < self->capacity; i++) {
+        self->destroy_function(self->nodes[i].key, self->nodes[i].val);
+    }
+    pthread_mutex_unlock(&self->write_lock);
+	return true;
 }
 
 bool invalidate_map(hashmap_t *self) {
-    return false;
+    pthread_mutex_lock(&self->write_lock);
+    if (self == NULL) {
+        errno = EINVAL;
+        pthread_mutex_unlock(&self->write_lock);
+        return false;
+    }
+    for (int i = 0; i < self->capacity; i++) {
+        self->destroy_function(self->nodes[i].key, self->nodes[i].val);
+    }
+    free(self->nodes);
+    self->invalid = true;
+    return true;
 }
