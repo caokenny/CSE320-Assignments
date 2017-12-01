@@ -233,7 +233,11 @@ bool clear_map(hashmap_t *self) {
         return false;
     }
     for (int i = 0; i < self->capacity; i++) {
-        self->destroy_function(self->nodes[i].key, self->nodes[i].val);
+        if (self->nodes[i].key.key_len != 0 || self->nodes[i].val.val_len != 0) {
+            self->destroy_function(self->nodes[i].key, self->nodes[i].val);
+            self->nodes[i].key.key_len = 0;
+            self->nodes[i].val.val_len = 0;
+        }
     }
     pthread_mutex_unlock(&self->write_lock);
 	return true;
@@ -247,9 +251,14 @@ bool invalidate_map(hashmap_t *self) {
         return false;
     }
     for (int i = 0; i < self->capacity; i++) {
-        self->destroy_function(self->nodes[i].key, self->nodes[i].val);
+        if (self->nodes[i].key.key_len != 0 || self->nodes[i].val.val_len != 0) {
+            self->destroy_function(self->nodes[i].key, self->nodes[i].val);
+            self->nodes[i].key.key_len = 0;
+            self->nodes[i].val.val_len = 0;
+        }
     }
     free(self->nodes);
     self->invalid = true;
+    pthread_mutex_unlock(&self->write_lock);
     return true;
 }

@@ -14,7 +14,7 @@ queue_t *create_queue(void) {
 
 bool invalidate_queue(queue_t *self, item_destructor_f destroy_function) {
     pthread_mutex_lock(&(self->lock));
-    if (self == NULL || destroy_function == NULL) {
+    if (self == NULL || destroy_function == NULL || self->invalid == true) {
         errno = EINVAL;
         pthread_mutex_unlock(&(self->lock));
         return false;
