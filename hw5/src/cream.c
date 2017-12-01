@@ -14,7 +14,7 @@
 queue_t *globalQueue;
 hashmap_t *globalMap;
 
-int listenFD;
+int listenFD, connectionFD;
 
 int openListenFD(int portNumber);
 void *connectionHandler(void *arg);
@@ -52,7 +52,7 @@ MAX_ENTRIES        The maximum number of entries that can be stored in `cream`'s
 
     //Set arguments to given variables
     struct sockaddr_in clientAddr;
-    int connectionFD, clientLength;
+    int clientLength;
 
     int numWorkers = atoi(argv[1]);
     int portNumber = atoi(argv[2]);
@@ -90,6 +90,7 @@ void *connectionHandler(void *arg) {
                 responseHeader.response_code = BAD_REQUEST;
                 responseHeader.value_size = 0;
                 write(clientFD, &responseHeader, sizeof(responseHeader));
+                close(connectionFD);
             } else {
                 void *keyPtr = malloc(requestHeader.key_size);
                 void *valPtr = malloc(requestHeader.value_size);
@@ -104,12 +105,14 @@ void *connectionHandler(void *arg) {
                 responseHeader.response_code = OK;
                 responseHeader.value_size = 0;
                 write(clientFD, &responseHeader, sizeof(responseHeader));
+                close(connectionFD);
             }
         } else if (requestHeader.request_code == GET) {
             if (requestHeader.key_size < MIN_KEY_SIZE || requestHeader.key_size > MAX_KEY_SIZE) {
                 responseHeader.response_code = BAD_REQUEST;
                 responseHeader.value_size = 0;
                 write(clientFD, &responseHeader, sizeof(responseHeader));
+                close(connectionFD);
             } else {
                 void *keyPtr = malloc(requestHeader.key_size);
                 read(clientFD, keyPtr, requestHeader.key_size);
@@ -120,10 +123,12 @@ void *connectionHandler(void *arg) {
                     responseHeader.value_size = val.val_len;
                     write(clientFD, &responseHeader, sizeof(responseHeader));
                     write(clientFD, val.val_base, val.val_len);
+                    close(connectionFD);
                 } else {
                     responseHeader.response_code = NOT_FOUND;
                     responseHeader.value_size = 0;
                     write(clientFD, &responseHeader, sizeof(responseHeader));
+                    close(connectionFD);
                 }
                 free(keyPtr);
             }
@@ -132,6 +137,7 @@ void *connectionHandler(void *arg) {
                 responseHeader.response_code = BAD_REQUEST;
                 responseHeader.value_size = 0;
                 write(clientFD, &responseHeader, sizeof(responseHeader));
+                close(connectionFD);
             } else {
                 void *keyPtr = malloc(requestHeader.key_size);
                 read(clientFD, keyPtr, requestHeader.key_size);
@@ -140,12 +146,14 @@ void *connectionHandler(void *arg) {
                 responseHeader.response_code = OK;
                 responseHeader.value_size = 0;
                 write(clientFD, &responseHeader, sizeof(responseHeader));
+                close(connectionFD);
             }
         } else if (requestHeader.request_code == CLEAR) {
             clear_map(globalMap);
             responseHeader.response_code = OK;
             responseHeader.value_size = 0;
             write(clientFD, &responseHeader, sizeof(responseHeader));
+            close(connectionFD);
         } else {
             responseHeader.response_code = UNSUPPORTED;
             responseHeader.value_size = 0;
