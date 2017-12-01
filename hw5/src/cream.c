@@ -81,7 +81,7 @@ void *connectionHandler(void *arg) {
         response_header_t responseHeader;
         read(clientFD, &requestHeader, sizeof(requestHeader));
         if (requestHeader.request_code == PUT) {
-            if (requestHeader.key_size <= 0 || requestHeader.value_size <= 0) {
+            if (requestHeader.key_size < MIN_KEY_SIZE || requestHeader.key_size > MAX_KEY_SIZE || requestHeader.value_size < MIN_VALUE_SIZE || requestHeader.value_size > MAX_VALUE_SIZE) {
                 responseHeader.response_code = BAD_REQUEST;
                 responseHeader.value_size = 0;
                 write(clientFD, &responseHeader, sizeof(responseHeader));
@@ -101,7 +101,7 @@ void *connectionHandler(void *arg) {
                 write(clientFD, &responseHeader, sizeof(responseHeader));
             }
         } else if (requestHeader.request_code == GET) {
-            if (requestHeader.key_size <= 0) {
+            if (requestHeader.key_size < MIN_KEY_SIZE || requestHeader.key_size > MAX_KEY_SIZE) {
                 responseHeader.response_code = BAD_REQUEST;
                 responseHeader.value_size = 0;
                 write(clientFD, &responseHeader, sizeof(responseHeader));
@@ -123,9 +123,10 @@ void *connectionHandler(void *arg) {
                 free(keyPtr);
             }
         } else if (requestHeader.request_code == EVICT) {
-            if (requestHeader.key_size <= 0) {
+            if (requestHeader.key_size < MIN_KEY_SIZE || requestHeader.key_size > MAX_KEY_SIZE) {
                 responseHeader.response_code = BAD_REQUEST;
                 responseHeader.value_size = 0;
+                write(clientFD, &responseHeader, sizeof(responseHeader));
             } else {
                 void *keyPtr = malloc(requestHeader.key_size);
                 read(clientFD, keyPtr, requestHeader.key_size);
