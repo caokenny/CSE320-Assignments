@@ -13,20 +13,24 @@
 queue_t *globalQueue;
 hashmap_t *globalMap;
 
-pthread_mutex_t lock;
+int listenFD;
 
-int openListenFD(int portNumber, int maxEntries);
+int openListenFD(int portNumber);
 void *connectionHandler(void *arg);
+
+void sigchild_handler(int sig) {
+    shutdown(listenFD, 2);
+    exit(EXIT_SUCCESS);
+}
 
 void error(char *msg) {
     perror(msg);
     exit(EXIT_FAILURE);
 }
 
-void destroyHashMap() {
-}
-
-void destroyQueue() {
+void destroyHashMap(map_key_t key, map_val_t val) {
+    free(key.key_base);
+    free(val.val_base);
 }
 
 int main(int argc, char *argv[]) {
@@ -52,62 +56,99 @@ MAX_ENTRIES        The maximum number of entries that can be stored in `cream`'s
     globalQueue = create_queue(); //Create a new queue
     globalMap = create_map(maxEntries, jenkins_one_at_a_time_hash, destroyHashMap); //Create a new hashmap
 
-    pthread_mutex_init(&lock, NULL);
-
     pthread_t threadIDs[numWorkers]; //Spawn NUM_WORKERS amount of threads
     for (int i = 0; i < numWorkers; i++) {
-        pthread_create(&threadIDs[i], NULL, connectionHandler, &connectionFD);
+        pthread_create(&threadIDs[i], NULL, connectionHandler, NULL);
     }
 
-    int listenFD = openListenFD(portNumber, maxEntries); //Open socket, bind to specified PORT_NUMBER and infinitely listen
+    listenFD = openListenFD(portNumber); //Open socket, bind to specified PORT_NUMBER and infinitely listen
     clientLength = sizeof(clientAddr);
 
-    //int i = 0;
-
-    //request_header_t requestHeader;
-
     //Accept a client's connection
-    if ((connectionFD = accept(listenFD, (struct sockaddr*) &clientAddr, (socklen_t*) &clientLength)) < 0)
-        error("ERROR on accept");
-
-    enqueue(globalQueue, &connectionFD);
-
-//    read(connectionFD, &requestHeader, sizeof(requestHeader));
-
-//    printf("%d\n", requestHeader.request_code);
-
-    //printf("%d\n", *(int*)globalQueue->front->item);
-
-
-
-    /*while (connectionFD = accept(listenFD, (struct sockaddr*) &clientAddr, (socklen_t*) &clientLength)) {
-        if (pthread_create(&threadIDs[i], NULL, connectionHandler, connectionFD) < 0)
-            error("ERROR on creating thread");
-
-        pthread_join(threadIDs[i], NULL);
+    while ((connectionFD = accept(listenFD, (struct sockaddr*) &clientAddr, (socklen_t*) &clientLength))) {
+        if (connectionFD < 0)
+            error("ERROR on accept");
+        enqueue(globalQueue, &connectionFD);
     }
 
-    if (connectionFD < 0)
-        error("ERROR on accept");
-    */
-
-
-
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
 
 void *connectionHandler(void *arg) {
-    //pthread_mutex_lock(&lock);
-    //int clientFD = (int*) arg;
-    //pthread_mutex_unlock(&lock);
-    int clientFD = *(int*) arg;
-    request_header_t requestHeader;
-    read(clientFD, &requestHeader, sizeof(requestHeader));
-    printf("%d\n", requestHeader.request_code);
+    while (1) {
+        int clientFD = *(int*)dequeue(globalQueue);
+        request_header_t requestHeader;
+        response_header_t responseHeader;
+        read(clientFD, &requestHeader, sizeof(requestHeader));
+        if (requestHeader.request_code == PUT) {
+            if (requestHeader.key_size <= 0 || requestHeader.value_size <= 0) {
+                responseHeader.response_code = BAD_REQUEST;
+                responseHeader.value_size = 0;
+                write(clientFD, &responseHeader, sizeof(responseHeader));
+            } else {
+                void *keyPtr = malloc(requestHeader.key_size);
+                void *valPtr = malloc(requestHeader.value_size);
+                //*keyPtr = requestHeader;
+                read(clientFD, keyPtr, requestHeader.key_size);
+                //*valPtr = requestHeader + requestHeader.key_size;
+                read(clientFD, valPtr, requestHeader.value_size);
+                map_key_t key = {keyPtr, requestHeader.key_size};
+                map_val_t val = {valPtr, requestHeader.value_size};
+                put(globalMap, key, val, true);
+
+                responseHeader.response_code = OK;
+                responseHeader.value_size = 0;
+                write(clientFD, &responseHeader, sizeof(responseHeader));
+            }
+        } else if (requestHeader.request_code == GET) {
+            if (requestHeader.key_size <= 0) {
+                responseHeader.response_code = BAD_REQUEST;
+                responseHeader.value_size = 0;
+                write(clientFD, &responseHeader, sizeof(responseHeader));
+            } else {
+                void *keyPtr = malloc(requestHeader.key_size);
+                read(clientFD, keyPtr, requestHeader.key_size);
+                map_key_t key = {keyPtr, requestHeader.key_size};
+                map_val_t val = get(globalMap, key);
+                if (val.val_base != NULL && val.val_len != 0) {
+                    responseHeader.response_code = OK;
+                    responseHeader.value_size = val.val_len;
+                    write(clientFD, &responseHeader, sizeof(responseHeader));
+                    write(clientFD, val.val_base, val.val_len);
+                } else {
+                    responseHeader.response_code = NOT_FOUND;
+                    responseHeader.value_size = 0;
+                    write(clientFD, &responseHeader, sizeof(responseHeader));
+                }
+                free(keyPtr);
+            }
+        } else if (requestHeader.request_code == EVICT) {
+            if (requestHeader.key_size <= 0) {
+                responseHeader.response_code = BAD_REQUEST;
+                responseHeader.value_size = 0;
+            } else {
+                void *keyPtr = malloc(requestHeader.key_size);
+                read(clientFD, keyPtr, requestHeader.key_size);
+                map_key_t key = {keyPtr, requestHeader.key_size};
+                delete(globalMap, key);
+                responseHeader.response_code = OK;
+                responseHeader.value_size = 0;
+                write(clientFD, &responseHeader, sizeof(responseHeader));
+            }
+        } else if (requestHeader.request_code == CLEAR) {
+            clear_map(globalMap);
+            responseHeader.response_code = OK;
+            responseHeader.value_size = 0;
+            write(clientFD, &responseHeader, sizeof(responseHeader));
+        } else {
+            responseHeader.response_code = UNSUPPORTED;
+            responseHeader.value_size = 0;
+        }
+    }
     return NULL;
 }
 
-int openListenFD(int portNumber, int maxEntries) {
+int openListenFD(int portNumber) {
     struct sockaddr_in servAddr;
 
     int sockFD, optval = 1;
@@ -127,7 +168,7 @@ int openListenFD(int portNumber, int maxEntries) {
     if (bind(sockFD, (struct sockaddr*) &servAddr, sizeof(servAddr)) < 0)
         error("ERROR on binding");
     //Infinitely listen?
-    listen(sockFD, maxEntries);
+    listen(sockFD, 1);
 
     return sockFD;
 }

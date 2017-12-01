@@ -65,9 +65,10 @@ void *dequeue(queue_t *self) {
         pthread_mutex_unlock(&(self->lock));
         return NULL;
     }
+    void *returnThis = self->front->item;
     queue_node_t *remove = self->front;
     self->front = self->front->next;
     free(remove);
     pthread_mutex_unlock(&(self->lock));
-    return NULL;
+    return returnThis;
 }

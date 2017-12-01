@@ -1,6 +1,8 @@
 #include "utils.h"
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
+#include "debug.h"
 
 #define MAP_KEY(base, len) (map_key_t) {.key_base = base, .key_len = len}
 #define MAP_VAL(base, len) (map_val_t) {.val_base = base, .val_len = len}
@@ -28,14 +30,16 @@ hashmap_t *create_map(uint32_t capacity, hash_func_f hash_function, destructor_f
 
 bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
     pthread_mutex_lock(&self->write_lock);
-    if (self == NULL) {
+    if (self == NULL || self->invalid == true || key.key_base == NULL || key.key_len == 0 || val.val_base == NULL || val.val_len == 0) {
         errno = EINVAL;
         return false;
     }
     uint32_t hashTo = 0;
     hashTo = get_index(self, key); //get hash index
+    debug("hashTo = %d", hashTo);
     //if key is already in map, update value
-    if (self->nodes[hashTo].key.key_base == key.key_base && self->nodes[hashTo].key.key_len == key.key_len) {
+    if (self->nodes[hashTo].key.key_len == key.key_len && memcmp(self->nodes[hashTo].key.key_base, key.key_base, key.key_len) == 0) {
+
         self->nodes[hashTo].val.val_base = val.val_base;
         self->nodes[hashTo].val.val_len = val.val_len;
     }
@@ -46,6 +50,9 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
 
         self->nodes[hashTo].val.val_base = val.val_base;
         self->nodes[hashTo].val.val_len = val.val_len;
+
+        self->size++;
+        //debug("emptyCount = %d", emptyCount++);
     } else {
         int index = hashTo;
         bool found = false;
@@ -59,6 +66,7 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
                 self->nodes[index].val.val_base = val.val_base;
                 self->nodes[index].val.val_len = val.val_len;
                 found = true;
+                self->size++;
                 break;
             }
             //if not increment index
@@ -75,6 +83,7 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
                     self->nodes[index].val.val_base = val.val_base;
                     self->nodes[index].val.val_len = val.val_len;
                     found = true;
+                    self->size++;
                     break;
                 } else index++;
             }
@@ -94,13 +103,18 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
             return false;
         }
     }
-    self->size++;
     pthread_mutex_unlock(&(self->write_lock));
     return true;
 }
 
 map_val_t get(hashmap_t *self, map_key_t key) {
     pthread_mutex_lock(&(self->fields_lock));
+    if (self == NULL || self->invalid == true || key.key_base == NULL || key.key_len == 0) {
+        errno = EINVAL;
+        map_val_t errorVal = {NULL, 0};
+        pthread_mutex_unlock(&(self->fields_lock));
+        return errorVal;
+    }
     map_val_t returnMapVal;
     self->num_readers++;
     if (self->num_readers == 1)
@@ -108,13 +122,13 @@ map_val_t get(hashmap_t *self, map_key_t key) {
     pthread_mutex_unlock(&(self->fields_lock));
 
     uint32_t hashTo = get_index(self, key);
-    if (self->nodes[hashTo].key.key_base == key.key_base && self->nodes[hashTo].key.key_len == key.key_len) {
+    if (self->nodes[hashTo].key.key_len == key.key_len && memcmp(self->nodes[hashTo].key.key_base, key.key_base, key.key_len) == 0) {
         returnMapVal = self->nodes[hashTo].val;
     } else {
         int index = hashTo + 1;
         bool found = false;
         while (index != self->capacity) {
-            if (self->nodes[index].key.key_base == key.key_base && self->nodes[index].key.key_len == key.key_len) {
+            if (self->nodes[index].key.key_len == key.key_len && memcmp(self->nodes[index].key.key_base, key.key_base, key.key_len) == 0) {
                 returnMapVal = self->nodes[index].val;
                 found = true;
                 break;
@@ -123,7 +137,7 @@ map_val_t get(hashmap_t *self, map_key_t key) {
         if (found == false) {
             index = 0;
             while (index != hashTo) {
-                if (self->nodes[index].key.key_base == key.key_base && self->nodes[index].key.key_len == key.key_len) {
+                if (self->nodes[index].key.key_len == key.key_len && memcmp(self->nodes[index].key.key_base, key.key_base, key.key_len) == 0) {
                     returnMapVal = self->nodes[index].val;
                     found = true;
                     break;
@@ -148,13 +162,13 @@ map_val_t get(hashmap_t *self, map_key_t key) {
 map_node_t delete(hashmap_t *self, map_key_t key) {
     pthread_mutex_lock(&self->write_lock);
     map_node_t returnMapNode;
-    if (self == NULL) {
+    if (self == NULL || self->invalid == true || key.key_base == NULL || key.key_len == 0) {
         errno = EINVAL;
         pthread_mutex_unlock(&self->write_lock);
         return MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), false);
     }
     uint32_t hashTo = get_index(self, key);
-    if (self->nodes[hashTo].key.key_base == key.key_base && self->nodes[hashTo].key.key_len == key.key_len) {
+    if (self->nodes[hashTo].key.key_len == key.key_len && memcmp(self->nodes[hashTo].key.key_base, key.key_base, key.key_len) == 0) {
         returnMapNode = self->nodes[hashTo];
 
         self->nodes[hashTo].key.key_base = NULL;
@@ -164,11 +178,12 @@ map_node_t delete(hashmap_t *self, map_key_t key) {
         self->nodes[hashTo].val.val_len = 0;
 
         self->nodes[hashTo].tombstone = true;
+        self->size--;
     } else {
         int index = hashTo + 1;
         bool found = false;
         while (index != self->capacity) {
-            if (self->nodes[index].key.key_base == key.key_base && self->nodes[index].key.key_len == key.key_len) {
+            if (self->nodes[index].key.key_len == key.key_len && memcmp(self->nodes[index].key.key_base, key.key_base, key.key_len) == 0) {
                 returnMapNode = self->nodes[index];
 
                 self->nodes[index].key.key_base = NULL;
@@ -180,13 +195,14 @@ map_node_t delete(hashmap_t *self, map_key_t key) {
                 self->nodes[index].tombstone = true;
 
                 found = true;
+                self->size--;
                 break;
             } else index++;
         }
         if (found == false) {
             index = 0;
             while (index != hashTo) {
-                if (self->nodes[index].key.key_base == key.key_base && self->nodes[index].key.key_len == key.key_len) {
+                if (self->nodes[index].key.key_len == key.key_len && memcmp(self->nodes[index].key.key_base, key.key_base, key.key_len) == 0) {
                     returnMapNode = self->nodes[index];
 
                     self->nodes[index].key.key_base = NULL;
@@ -198,6 +214,7 @@ map_node_t delete(hashmap_t *self, map_key_t key) {
                     self->nodes[index].tombstone = true;
 
                     found = true;
+                    self->size--;
                     break;
                 } else index++;
             }
@@ -210,7 +227,7 @@ map_node_t delete(hashmap_t *self, map_key_t key) {
 
 bool clear_map(hashmap_t *self) {
     pthread_mutex_lock(&self->write_lock);
-    if (self == NULL) {
+    if (self == NULL || self->invalid == true) {
         errno = EINVAL;
         pthread_mutex_unlock(&self->write_lock);
         return false;
@@ -224,7 +241,7 @@ bool clear_map(hashmap_t *self) {
 
 bool invalidate_map(hashmap_t *self) {
     pthread_mutex_lock(&self->write_lock);
-    if (self == NULL) {
+    if (self == NULL || self->invalid == true) {
         errno = EINVAL;
         pthread_mutex_unlock(&self->write_lock);
         return false;
