@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include "const.h"
 
+//keep a counter for the least recently used
+
 typedef struct map_key_t {
     void *key_base;
     size_t key_len;
