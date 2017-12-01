@@ -45,6 +45,10 @@ MAX_ENTRIES        The maximum number of entries that can be stored in `cream`'s
             exit(EXIT_SUCCESS);
         }
     }
+    if (argc < 4 || argc > 4) {
+        printf("Not enough arguments given\n");
+        exit(EXIT_FAILURE);
+    }
 
     //Set arguments to given variables
     struct sockaddr_in clientAddr;
