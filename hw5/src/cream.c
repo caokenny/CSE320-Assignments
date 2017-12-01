@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <signal.h>
 //#include "debug.h"
 
 queue_t *globalQueue;
@@ -19,7 +20,7 @@ int listenFD, connectionFD;
 int openListenFD(int portNumber);
 void *connectionHandler(void *arg);
 
-void sigchild_handler(int sig) {
+void sigint_handler(int sig) {
     shutdown(listenFD, 2);
     exit(EXIT_SUCCESS);
 }
@@ -35,6 +36,7 @@ void destroyHashMap(map_key_t key, map_val_t val) {
 }
 
 int main(int argc, char *argv[]) {
+    signal(SIGINT, sigint_handler);
     for (int i = 0; i < argc; i++) {
         if (strcmp(argv[i], "-h") == 0) {
             printf("./cream [-h] NUM_WORKERS PORT_NUMBER MAX_ENTRIES\n\
