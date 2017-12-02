@@ -52,6 +52,7 @@ typedef struct hashmap_t {
  *                         when the map is destroyed.
  * @return A pointer to the new hashmap_t instance.
  */
+
 hashmap_t *create_map(uint32_t capacity, hash_func_f hash_function, destructor_f destroy_function);
 
 /*

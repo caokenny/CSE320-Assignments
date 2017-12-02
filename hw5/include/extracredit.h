@@ -32,6 +32,7 @@ typedef struct map_node_t {
     map_key_t key;
     map_val_t val;
     bool tombstone;
+    int operationNum;
 } map_node_t;
 
 typedef struct hashmap_t {
@@ -44,6 +45,7 @@ typedef struct hashmap_t {
     pthread_mutex_t write_lock;
     pthread_mutex_t fields_lock;
     bool invalid;
+    int operationsPerformed;
 } hashmap_t;
 
 /* **DO NOT** modify the function prototypes below */
@@ -109,5 +111,7 @@ bool clear_map(hashmap_t *self);
  * @return true if the operation was successful.
  */
 bool invalidate_map(hashmap_t *self);
+
+int findLRU(hashmap_t *self);
 
 #endif

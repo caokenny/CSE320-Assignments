@@ -1,4 +1,7 @@
 #include "utils.h"
+#include <errno.h>
+#include <string.h>
+#include <stdio.h>
 
 hashmap_t *create_map(uint32_t capacity, hash_func_f hash_function, destructor_f destroy_function) {
     if (hash_function == NULL || destroy_function == NULL || capacity < 0) {
@@ -17,6 +20,7 @@ hashmap_t *create_map(uint32_t capacity, hash_func_f hash_function, destructor_f
     newHM->invalid = false;
     map_node_t *map_node = (map_node_t*)calloc(capacity, sizeof(map_node_t));
     newHM->nodes = map_node;
+    newHM->operationsPerformed = 1;
     return newHM;
 }
 
@@ -28,12 +32,12 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
     }
     uint32_t hashTo = 0;
     hashTo = get_index(self, key); //get hash index
-    debug("hashTo = %d", hashTo);
     //if key is already in map, update value
     if (self->nodes[hashTo].key.key_len == key.key_len && memcmp(self->nodes[hashTo].key.key_base, key.key_base, key.key_len) == 0) {
 
         self->nodes[hashTo].val.val_base = val.val_base;
         self->nodes[hashTo].val.val_len = val.val_len;
+        self->nodes[hashTo].operationNum = self->operationsPerformed;
     }
     // if index is empty insert key/val
     else if (self->nodes[hashTo].key.key_base == NULL || self->nodes[hashTo].key.key_len == 0) {
@@ -44,6 +48,8 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
         self->nodes[hashTo].val.val_len = val.val_len;
 
         self->size++;
+
+        self->nodes[hashTo].operationNum = self->operationsPerformed;
         //debug("emptyCount = %d", emptyCount++);
     } else {
         int index = hashTo;
@@ -59,6 +65,7 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
                 self->nodes[index].val.val_len = val.val_len;
                 found = true;
                 self->size++;
+                self->nodes[index].operationNum = self->operationsPerformed;
                 break;
             }
             //if not increment index
@@ -76,11 +83,13 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
                     self->nodes[index].val.val_len = val.val_len;
                     found = true;
                     self->size++;
+                    self->nodes[index].operationNum = self->operationsPerformed;
                     break;
                 } else index++;
             }
         } //if map is full and force is true overwrite index
         if (found == false && force == true) {
+            hashTo = findLRU(self);
             self->destroy_function(self->nodes[hashTo].key, self->nodes[hashTo].val);
 
             self->nodes[hashTo].key.key_base = key.key_base;
@@ -88,6 +97,8 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
 
             self->nodes[hashTo].val.val_base = val.val_base;
             self->nodes[hashTo].val.val_len = val.val_len;
+
+            self->nodes[hashTo].operationNum = self->operationsPerformed;
         }
         if (found == false && force == false) {
             errno = ENOMEM;
@@ -116,6 +127,7 @@ map_val_t get(hashmap_t *self, map_key_t key) {
     uint32_t hashTo = get_index(self, key);
     if (self->nodes[hashTo].key.key_len == key.key_len && memcmp(self->nodes[hashTo].key.key_base, key.key_base, key.key_len) == 0) {
         returnMapVal = self->nodes[hashTo].val;
+        self->nodes[hashTo].operationNum = self->operationsPerformed;
     } else {
         int index = hashTo + 1;
         bool found = false;
@@ -123,6 +135,7 @@ map_val_t get(hashmap_t *self, map_key_t key) {
             if (self->nodes[index].key.key_len == key.key_len && memcmp(self->nodes[index].key.key_base, key.key_base, key.key_len) == 0) {
                 returnMapVal = self->nodes[index].val;
                 found = true;
+                self->nodes[index].operationNum = self->operationsPerformed;
                 break;
             } else index++;
         }
@@ -132,6 +145,7 @@ map_val_t get(hashmap_t *self, map_key_t key) {
                 if (self->nodes[index].key.key_len == key.key_len && memcmp(self->nodes[index].key.key_base, key.key_base, key.key_len) == 0) {
                     returnMapVal = self->nodes[index].val;
                     found = true;
+                    self->nodes[index].operationNum = self->operationsPerformed;
                     break;
                 } else index++;
             }
@@ -141,6 +155,7 @@ map_val_t get(hashmap_t *self, map_key_t key) {
             }
         }
     }
+    self->operationsPerformed++;
 
     pthread_mutex_lock(&(self->fields_lock));
     self->num_readers--;
@@ -252,4 +267,16 @@ bool invalidate_map(hashmap_t *self) {
     self->invalid = true;
     pthread_mutex_unlock(&self->write_lock);
     return true;
+}
+
+int findLRU(hashmap_t *self) {
+    int lru = 1;
+    int lruNode = 0;
+    for (int i = 0; i < self->capacity; i++) {
+        if (self->nodes[i].operationNum < lru && self->nodes[i].operationNum != 0) {
+            lru = self->nodes[i].operationNum;
+            lruNode = i;
+        }
+    }
+    return lruNode;
 }
