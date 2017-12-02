@@ -1,7 +1,7 @@
 #include "cream.h"
 #include "utils.h"
 #include "queue.h"
-#include "hashmap.h"
+//#include "hashmap.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
