@@ -32,6 +32,7 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
     pthread_mutex_lock(&self->write_lock);
     if (self == NULL || self->invalid == true || key.key_base == NULL || key.key_len == 0 || val.val_base == NULL || val.val_len == 0) {
         errno = EINVAL;
+        pthread_mutex_unlock(&self->write_lock);
         return false;
     }
     uint32_t hashTo = 0;
