@@ -85,6 +85,7 @@ MAX_ENTRIES        The maximum number of entries that can be stored in `cream`'s
 void *connectionHandler(void *arg) {
     while (1) {
         int clientFD = *(int*)dequeue(globalQueue);
+        //printf("%d\n", clientFD);
         pthread_detach(pthread_self());
         request_header_t requestHeader;
         response_header_t responseHeader;
